@@ -1,5 +1,5 @@
 # Mp4Composer-android
-MP4 video transcode using Android MediaCodec API. And OpenGL Shaders to apply video effects.
+MP4 video transcode using Android MediaCodec API, and filter MP4 with OpenGL Shaders.
 
 ## References And Special Thanks to
 * [android-transcoder](https://github.com/ypresto/android-transcoder)
