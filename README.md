@@ -9,3 +9,6 @@ MP4 video transcode using Android MediaCodec API. And OpenGL Shaders to apply vi
 * [grafika](https://github.com/google/grafika)
 * [libstagefright](https://android.googlesource.com/platform/frameworks/av/+/lollipop-release/media/libstagefright)
 
+## License
+
+[MIT License](https://github.com/MasayukiSuda/Mp4Composer-android/blob/master/LICENSE)
