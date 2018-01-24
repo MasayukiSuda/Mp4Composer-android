@@ -22,7 +22,7 @@ import android.widget.Toast;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.composer.Mp4Composer;
-import com.daasuu.mp4compose.filter.GlVignetteFilter;
+import com.daasuu.mp4compose.filter.GlSepiaFilter;
 import com.daasuu.sample.video.VideoItem;
 import com.daasuu.sample.video.VideoListAdapter;
 import com.daasuu.sample.video.VideoLoadListener;
@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                 // .rotation(Rotation.ROTATION_270)
                 .size(720, 1280)
                 .fillMode(FillMode.PRESERVE_ASPECT_FIT)
-                .filter(new GlVignetteFilter())
+                .filter(new GlSepiaFilter())
                 .listener(new Mp4Composer.Listener() {
                     @Override
                     public void onProgress(double progress) {
