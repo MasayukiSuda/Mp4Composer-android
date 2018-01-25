@@ -1,5 +1,9 @@
 # Mp4Composer-android
-MP4 video transcode using Android MediaCodec API, and filter MP4 with OpenGL Shaders.
+[![Platform](https://img.shields.io/badge/platform-android-green.svg)](http://developer.android.com/index.html)
+<img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat">
+[![API](https://img.shields.io/badge/API-19%2B-blue.svg?style=flat)](https://android-arsenal.com/api?level=19)
+
+Create an Mp4 movie with MediaCodec. You can apply filter, scale, and rotate Mp4.
 
 ## References And Special Thanks to
 * [android-transcoder](https://github.com/ypresto/android-transcoder)
