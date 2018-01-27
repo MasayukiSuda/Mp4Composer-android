@@ -6,6 +6,18 @@
 This library create an Mp4 movie using Android MediaCodec API and apply filter, scale, and rotate Mp4.<br>
 Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
 
+<table>
+    <td><img src="art/sample.gif"><br><a href="art/samplevideo.mp4">Sample Video</a><br>No filter</td>
+    <td><img src="art/grayscale.gif" ><br><a href="art/gray_scale_filter_apply.mp4">GlGlayScaleFilter</a><br> apply</td>
+    <td><img src="art/monochrome.gif" ><br><a href="art/monochrome_filter_apply.mp4">GlMonochromeFilter</a><br> apply</td>
+    <td><img src="art/watermark.gif" ><br><a href="art/watermark_filter_apply.mp4">GlWatermarkFilter</a><br> apply</td>
+</table>
+
+
+
+
+
+
 ## Gradle
 ```groovy
     dependencies {
