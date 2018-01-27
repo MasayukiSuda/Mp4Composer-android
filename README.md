@@ -14,6 +14,47 @@ Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
     }
 ```
 
+## Usage
+```
+    new Mp4Composer(srcMp4Path, destMp4Path)
+            .rotation(Rotation.ROTATION_90)
+            .size((width) 540, (height) 960)
+            .fillMode(FillMode.PRESERVE_ASPECT_FIT)
+            .filter(new GlSepiaFilter())
+            .listener(new Mp4Composer.Listener() {
+                @Override
+                public void onProgress(double progress) {
+                    Log.d(TAG, "onProgress = " + progress);
+                }
+
+                @Override
+                public void onCompleted() {
+                    Log.d(TAG, "onCompleted()");
+                    runOnUiThread(() -> {
+                        Toast.makeText(context, "codec complete path =" + destPath, Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onCanceled() {
+                    Log.d(TAG, "onCanceled");
+                }
+
+                @Override
+                public void onFailed(Exception exception) {
+                    Log.e(TAG, "onFailed()", exception);
+                }
+            })
+            .start();
+```
+## Builder Method
+| method | description |
+|:---|:---|
+| rotation | Rotation of the movie, default Rotation.NORMAL |
+| size | Resolution of the movie, default same resolution of src movie |
+| fillMode | Options for scaling the bounds of an movie. PRESERVE_ASPECT_FIT is fit center. PRESERVE_ASPECT_CROP is center crop , default PRESERVE_ASPECT_FIT |
+| filter | This filter is OpenGL Shaders to apply effects on video. Custom filters can be created by inheriting <a href="https://github.com/MasayukiSuda/Mp4Composer-android/blob/master/mp4compose/src/main/java/com/daasuu/mp4compose/filter/GlFilter.java">GlFilter.java</a>. , default GlFilter(No filter) |
+| videoBitrate | Set Video Bitrate, default video bitrate is 0.25 * 30 * outputWidth * outputHeight |
 
 
 ## References And Special Thanks to
