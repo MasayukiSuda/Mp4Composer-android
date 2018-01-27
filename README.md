@@ -24,6 +24,11 @@ Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
 * [grafika](https://github.com/google/grafika)
 * [libstagefright](https://android.googlesource.com/platform/frameworks/av/+/lollipop-release/media/libstagefright)
 
+
+## Sample Dependencies
+* [glide](https://github.com/bumptech/glide)
+
+
 ## License
 
 [MIT License](https://github.com/MasayukiSuda/Mp4Composer-android/blob/master/LICENSE)
