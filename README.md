@@ -7,7 +7,7 @@ This library create an Mp4 movie using Android MediaCodec API and apply filter, 
 Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
 
 <table>
-    <td><img src="art/sample.gif"><br><a href="art/samplevideo.mp4">Sample Video</a><br>No filter</td>
+    <td><img src="art/sample.gif"><br>Sample Video<br>No filter</td>
     <td><img src="art/grayscale.gif" ><br><a href="mp4compose/src/main/java/com/daasuu/mp4compose/filter/GlGrayScaleFilter.java">GlGlayScaleFilter</a><br> apply</td>
     <td><img src="art/monochrome.gif" ><br><a href="mp4compose/src/main/java/com/daasuu/mp4compose/filter/GlMonochromeFilter.java">GlMonochromeFilter</a><br> apply</td>
     <td><img src="art/watermark.gif" ><br><a href="mp4compose/src/main/java/com/daasuu/mp4compose/filter/GlWatermarkFilter.java">GlWatermarkFilter</a><br> apply</td>
