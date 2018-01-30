@@ -174,6 +174,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
                 break;
             case CUSTOM:
                 if (fillModeCustomItem != null) {
+                    Matrix.translateM(MVPMatrix, 0, fillModeCustomItem.getTranslateX(), -fillModeCustomItem.getTranslateY(), 0f);
                     scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
                     if (rotation == Rotation.NORMAL || rotation == Rotation.ROTATION_180) {
                         Matrix.scaleM(MVPMatrix,
