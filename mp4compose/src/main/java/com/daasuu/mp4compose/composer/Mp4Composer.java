@@ -171,6 +171,7 @@ public class Mp4Composer {
                     if (listener != null) {
                         listener.onFailed(e);
                     }
+                    executorService.shutdown();
                     return;
                 }
 
