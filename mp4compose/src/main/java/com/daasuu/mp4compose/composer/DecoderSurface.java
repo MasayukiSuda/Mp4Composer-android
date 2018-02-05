@@ -180,13 +180,9 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
             case CUSTOM:
                 if (fillModeCustomItem != null) {
                     Matrix.translateM(MVPMatrix, 0, fillModeCustomItem.getTranslateX(), -fillModeCustomItem.getTranslateY(), 0f);
-                    if (rotation == Rotation.NORMAL || rotation == Rotation.ROTATION_180) {
-                        scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
-                    } else {
-                        scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.height(), inputResolution.width(), outputResolution.width(), outputResolution.height());
-                    }
+                    scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
 
-                    if (fillModeCustomItem.getScale() == 0 || fillModeCustomItem.getScale() == 180) {
+                    if (fillModeCustomItem.getRotate() == 0 || fillModeCustomItem.getRotate() == 180) {
                         Matrix.scaleM(MVPMatrix,
                                 0,
                                 fillModeCustomItem.getScale() * scale[0],
@@ -201,6 +197,13 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
                     }
 
                     Matrix.rotateM(MVPMatrix, 0, -(rotation.getRotation() + fillModeCustomItem.getRotate()), 0.f, 0.f, 1.f);
+
+//                    Log.d(TAG, "inputResolution = " + inputResolution.width() + " height = " + inputResolution.height());
+//                    Log.d(TAG, "out = " + outputResolution.width() + " height = " + outputResolution.height());
+//                    Log.d(TAG, "rotation = " + rotation.getRotation());
+//                    Log.d(TAG, "scale[0] = " + scale[0] + " scale[1] = " + scale[1]);
+
+
                 }
             default:
                 break;
