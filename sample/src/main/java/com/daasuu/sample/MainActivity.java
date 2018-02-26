@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         mp4Composer = null;
         mp4Composer = new Mp4Composer(videoItem.getPath(), videoPath)
                 // .rotation(Rotation.ROTATION_270)
-                .size(720, 1280)
+                //.size(720, 1280)
                 .fillMode(FillMode.PRESERVE_ASPECT_FIT)
                 .filter(new GlSepiaFilter())
                 .timeScale(2)

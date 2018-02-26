@@ -135,10 +135,6 @@ public class Mp4Composer {
                 final int videoRotate = getVideoRotation(srcPath);
                 final Resolution srcVideoResolution = getVideoResolution(srcPath, videoRotate);
 
-                if (outputResolution == null) {
-                    outputResolution = srcVideoResolution;
-                }
-
                 if (filter == null) {
                     filter = new GlFilter();
                 }
@@ -150,6 +146,19 @@ public class Mp4Composer {
                     fillMode = FillMode.CUSTOM;
                 } else {
                     fillMode = FillMode.PRESERVE_ASPECT_FIT;
+                }
+
+                if (outputResolution == null) {
+                    if (fillMode == FillMode.CUSTOM) {
+                        outputResolution = srcVideoResolution;
+                    } else {
+                        Rotation rotate = Rotation.fromInt(rotation.getRotation() + videoRotate);
+                        if (rotate == Rotation.ROTATION_90 || rotate == Rotation.ROTATION_270) {
+                            outputResolution = new Resolution(srcVideoResolution.height(), srcVideoResolution.width());
+                        } else {
+                            outputResolution = srcVideoResolution;
+                        }
+                    }
                 }
 
                 if (timeScale < 2) {

@@ -24,7 +24,7 @@ class RemixAudioComposer implements IAudioComposer {
     private long writtenPresentationTimeUs;
 
     private final int trackIndex;
-    private int muxCount = 0;
+    private int muxCount = 1;
 
     private final MediaFormat outputFormat;
 
@@ -138,7 +138,7 @@ class RemixAudioComposer implements IAudioComposer {
             isDecoderEOS = true;
             audioChannel.drainDecoderBufferAndQueue(AudioChannel.BUFFER_INDEX_END_OF_STREAM, 0);
         } else if (bufferInfo.size > 0) {
-            audioChannel.drainDecoderBufferAndQueue(result, bufferInfo.presentationTimeUs * timeScale);
+            audioChannel.drainDecoderBufferAndQueue(result, bufferInfo.presentationTimeUs / timeScale);
         }
 
         return DRAIN_STATE_CONSUMED;
@@ -177,13 +177,13 @@ class RemixAudioComposer implements IAudioComposer {
             return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
 
-        if (muxCount == 0) {
+        if (muxCount == 1) {
             muxer.writeSampleData(SAMPLE_TYPE, encoderBuffers.getOutputBuffer(result), bufferInfo);
         }
         if (muxCount < timeScale) {
             muxCount++;
         } else {
-            muxCount = 0;
+            muxCount = 1;
         }
 
         writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
