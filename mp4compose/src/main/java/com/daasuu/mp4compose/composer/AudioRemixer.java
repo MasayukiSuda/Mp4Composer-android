@@ -6,10 +6,11 @@ import java.nio.ShortBuffer;
 // Refer: https://github.com/ypresto/android-transcoder/blob/master/lib/src/main/java/net/ypresto/androidtranscoder/engine/AudioRemixer.java
 
 /**
+ * TODO: Util化
  * Created by sudamasayuki2 on 2018/02/22.
  */
 
-public interface AudioRemixer {
+interface AudioRemixer {
     void remix(final ShortBuffer inSBuff, final ShortBuffer outSBuff);
 
     AudioRemixer DOWNMIX = new AudioRemixer() {

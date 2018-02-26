@@ -35,6 +35,7 @@ public class Mp4Composer {
     private Listener listener;
     private FillMode fillMode = FillMode.PRESERVE_ASPECT_FIT;
     private FillModeCustomItem fillModeCustomItem;
+    private int timeScale = 1;
 
     private ExecutorService executorService;
 
@@ -78,6 +79,11 @@ public class Mp4Composer {
 
     public Mp4Composer listener(@NonNull Listener listener) {
         this.listener = listener;
+        return this;
+    }
+
+    public Mp4Composer timeScale(final int timeScale) {
+        this.timeScale = timeScale;
         return this;
     }
 
@@ -146,6 +152,10 @@ public class Mp4Composer {
                     fillMode = FillMode.PRESERVE_ASPECT_FIT;
                 }
 
+                if (timeScale < 2) {
+                    timeScale = 1;
+                }
+
                 Log.d(TAG, "rotation = " + (rotation.getRotation() + videoRotate));
                 Log.d(TAG, "inputResolution width = " + srcVideoResolution.width() + " height = " + srcVideoResolution.height());
                 Log.d(TAG, "outputResolution width = " + outputResolution.width() + " height = " + outputResolution.height());
@@ -163,7 +173,8 @@ public class Mp4Composer {
                             Rotation.fromInt(rotation.getRotation() + videoRotate),
                             srcVideoResolution,
                             fillMode,
-                            fillModeCustomItem
+                            fillModeCustomItem,
+                            timeScale
                     );
 
                 } catch (Exception e) {
