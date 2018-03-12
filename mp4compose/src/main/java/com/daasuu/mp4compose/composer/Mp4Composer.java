@@ -31,6 +31,7 @@ public class Mp4Composer {
     private GlFilter filter;
     private Resolution outputResolution;
     private int bitrate = -1;
+    private boolean mute = false;
     private Rotation rotation = Rotation.NORMAL;
     private Listener listener;
     private FillMode fillMode = FillMode.PRESERVE_ASPECT_FIT;
@@ -57,6 +58,11 @@ public class Mp4Composer {
 
     public Mp4Composer videoBitrate(int bitrate) {
         this.bitrate = bitrate;
+        return this;
+    }
+
+    public Mp4Composer mute(boolean mute){
+        this.mute = mute;
         return this;
     }
 
@@ -179,6 +185,7 @@ public class Mp4Composer {
                             outputResolution,
                             filter,
                             bitrate,
+                            mute,
                             Rotation.fromInt(rotation.getRotation() + videoRotate),
                             srcVideoResolution,
                             fillMode,
