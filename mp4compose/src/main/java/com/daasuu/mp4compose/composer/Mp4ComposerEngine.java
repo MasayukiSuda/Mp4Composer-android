@@ -28,7 +28,7 @@ class Mp4ComposerEngine {
     private static final long PROGRESS_INTERVAL_STEPS = 10;
     private FileDescriptor inputFileDescriptor;
     private VideoComposer videoComposer;
-    private AudioComposer audioComposer;
+    private IAudioComposer audioComposer;
     private MediaExtractor mediaExtractor;
     private MediaMuxer mediaMuxer;
     private ProgressCallback progressCallback;
@@ -52,7 +52,8 @@ class Mp4ComposerEngine {
             final Rotation rotation,
             final Resolution inputResolution,
             final FillMode fillMode,
-            final FillModeCustomItem fillModeCustomItem
+            final FillModeCustomItem fillModeCustomItem,
+            final int timeScale
     ) throws IOException {
 
 
@@ -96,9 +97,13 @@ class Mp4ComposerEngine {
                     audioTrackIndex = 0;
                 }
 
-                audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender);
-
-                videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, videoOutputFormat, muxRender);
+                if (timeScale < 2) {
+                    audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender);
+                } else {
+                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, mediaExtractor.getTrackFormat(audioTrackIndex), muxRender, timeScale);
+                }
+                audioComposer.setup();
+                videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, videoOutputFormat, muxRender, timeScale);
                 videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem);
 
 
@@ -110,7 +115,7 @@ class Mp4ComposerEngine {
             } else {
                 // no audio video
 
-                videoComposer = new VideoComposer(mediaExtractor, 0, videoOutputFormat, muxRender);
+                videoComposer = new VideoComposer(mediaExtractor, 0, videoOutputFormat, muxRender, timeScale);
                 videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem);
                 mediaExtractor.selectTrack(0);
                 runPipelinesNoAudio();
@@ -125,6 +130,7 @@ class Mp4ComposerEngine {
                     videoComposer = null;
                 }
                 if (audioComposer != null) {
+                    audioComposer.release();
                     audioComposer = null;
                 }
                 if (mediaExtractor != null) {

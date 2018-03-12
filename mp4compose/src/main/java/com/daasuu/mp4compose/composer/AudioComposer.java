@@ -10,7 +10,7 @@ import java.nio.ByteOrder;
 
 
 // Refer: https://github.com/ypresto/android-transcoder/blob/master/lib/src/main/java/net/ypresto/androidtranscoder/engine/PassThroughTrackTranscoder.java
-class AudioComposer {
+class AudioComposer implements IAudioComposer {
     private final MediaExtractor mediaExtractor;
     private final int trackIndex;
     private final MuxRender muxRender;
@@ -36,7 +36,7 @@ class AudioComposer {
 
 
     @SuppressLint("Assert")
-    boolean stepPipeline() {
+    public boolean stepPipeline() {
         if (isEOS) return false;
         int trackIndex = mediaExtractor.getSampleTrackIndex();
         if (trackIndex < 0) {
@@ -61,13 +61,23 @@ class AudioComposer {
         return true;
     }
 
-    long getWrittenPresentationTimeUs() {
+    @Override
+    public long getWrittenPresentationTimeUs() {
         return writtenPresentationTimeUs;
     }
 
-
-    boolean isFinished() {
+    @Override
+    public boolean isFinished() {
         return isEOS;
     }
 
+    @Override
+    public void setup() {
+        // do nothing
+    }
+
+    @Override
+    public void release() {
+        // do nothing
+    }
 }
