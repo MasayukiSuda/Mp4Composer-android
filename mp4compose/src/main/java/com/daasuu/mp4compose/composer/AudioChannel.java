@@ -39,8 +39,6 @@ class AudioChannel {
     private int inputChannelCount;
     private int outputChannelCount;
 
-    private AudioRemixer remixer;
-
     private final MediaCodecBufferCompatWrapper decoderBuffers;
     private final MediaCodecBufferCompatWrapper encoderBuffers;
 
@@ -76,14 +74,6 @@ class AudioChannel {
 
         if (outputChannelCount != 1 && outputChannelCount != 2) {
             throw new UnsupportedOperationException("Output channel count (" + outputChannelCount + ") not supported.");
-        }
-
-        if (inputChannelCount > outputChannelCount) {
-            remixer = AudioRemixer.DOWNMIX;
-        } else if (inputChannelCount < outputChannelCount) {
-            remixer = AudioRemixer.UPMIX;
-        } else {
-            remixer = AudioRemixer.PASSTHROUGH;
         }
 
         overflowBuffer.presentationTimeUs = 0;
@@ -204,7 +194,7 @@ class AudioChannel {
             // Overflow
             // Limit inBuff to outBuff's capacity
             inBuff.limit(outBuff.capacity());
-            remixer.remix(inBuff, outBuff);
+            outBuff.put(inBuff);
 
             // Reset limit to its own capacity & Keep position
             inBuff.limit(inBuff.capacity());
@@ -213,14 +203,14 @@ class AudioChannel {
             // NOTE: We should only reach this point when overflow buffer is empty
             final long consumedDurationUs =
                     sampleCountToDurationUs(inBuff.position(), inputSampleRate, inputChannelCount);
-            remixer.remix(inBuff, overflowBuff);
+            overflowBuff.put(inBuff);
 
             // Seal off overflowBuff & mark limit
             overflowBuff.flip();
             overflowBuffer.presentationTimeUs = input.presentationTimeUs + consumedDurationUs;
         } else {
             // No overflow
-            remixer.remix(inBuff, outBuff);
+            outBuff.put(inBuff);
         }
 
         return input.presentationTimeUs;
