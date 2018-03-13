@@ -22,7 +22,7 @@ Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
 ```groovy
     dependencies {
         // jCenter
-        implementation 'com.daasuu:Mp4Composer-android:0.1.3'
+        implementation 'com.daasuu:Mp4Composer-android:0.1.4'
     }
 ```
 
