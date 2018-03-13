@@ -49,6 +49,7 @@ class Mp4ComposerEngine {
             final Resolution outputResolution,
             final GlFilter filter,
             final int bitrate,
+            final boolean mute,
             final Rotation rotation,
             final Resolution inputResolution,
             final FillMode fillMode,
@@ -80,44 +81,43 @@ class Mp4ComposerEngine {
 
             MuxRender muxRender = new MuxRender(mediaMuxer);
 
-            if (mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) != null) {
+            // identify track indices
+            MediaFormat format = mediaExtractor.getTrackFormat(0);
+            String mime = format.getString(MediaFormat.KEY_MIME);
+
+            final int videoTrackIndex;
+            final int audioTrackIndex;
+
+            if (mime.startsWith("video/")) {
+                videoTrackIndex = 0;
+                audioTrackIndex = 1;
+            } else {
+                videoTrackIndex = 1;
+                audioTrackIndex = 0;
+            }
+
+            // setup video composer
+            videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, videoOutputFormat, muxRender, timeScale);
+            videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem);
+            mediaExtractor.selectTrack(videoTrackIndex);
+
+            // setup audio if present and not muted
+            if (mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) != null && !mute) {
                 // has Audio video
-
-                MediaFormat format = mediaExtractor.getTrackFormat(0);
-                String mime = format.getString(MediaFormat.KEY_MIME);
-
-                final int videoTrackIndex;
-                final int audioTrackIndex;
-
-                if (mime.startsWith("video/")) {
-                    videoTrackIndex = 0;
-                    audioTrackIndex = 1;
-                } else {
-                    videoTrackIndex = 1;
-                    audioTrackIndex = 0;
-                }
 
                 if (timeScale < 2) {
                     audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender);
                 } else {
                     audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, mediaExtractor.getTrackFormat(audioTrackIndex), muxRender, timeScale);
                 }
+
                 audioComposer.setup();
-                videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, videoOutputFormat, muxRender, timeScale);
-                videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem);
 
-
-                mediaExtractor.selectTrack(videoTrackIndex);
                 mediaExtractor.selectTrack(audioTrackIndex);
 
                 runPipelines();
-
             } else {
                 // no audio video
-
-                videoComposer = new VideoComposer(mediaExtractor, 0, videoOutputFormat, muxRender, timeScale);
-                videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem);
-                mediaExtractor.selectTrack(0);
                 runPipelinesNoAudio();
             }
 

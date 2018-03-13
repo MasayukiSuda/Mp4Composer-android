@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -46,15 +47,20 @@ public class MainActivity extends AppCompatActivity {
     private Mp4Composer mp4Composer;
     private Bitmap bitmap;
 
+    private CheckBox muteCheckBox;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        muteCheckBox = findViewById(R.id.mute_check_box);
+
         findViewById(R.id.start_codec_button).setOnClickListener(v -> {
             v.setEnabled(false);
             startCodec();
         });
+
         findViewById(R.id.cancel_button).setOnClickListener(v -> {
             if (mp4Composer != null) {
                 mp4Composer.cancel();
@@ -101,12 +107,15 @@ public class MainActivity extends AppCompatActivity {
         final ProgressBar progressBar = findViewById(R.id.progress_bar);
         progressBar.setMax(100);
 
+        boolean mute = muteCheckBox.isChecked();
+
         mp4Composer = null;
         mp4Composer = new Mp4Composer(videoItem.getPath(), videoPath)
                 // .rotation(Rotation.ROTATION_270)
                 //.size(720, 1280)
                 .fillMode(FillMode.PRESERVE_ASPECT_FIT)
                 .filter(new GlLutFilter(bitmap))
+                .mute(mute)
                 .listener(new Mp4Composer.Listener() {
                     @Override
                     public void onProgress(double progress) {
