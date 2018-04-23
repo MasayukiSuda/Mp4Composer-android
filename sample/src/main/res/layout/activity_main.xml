@@ -13,12 +13,34 @@
         android:enabled="false"
         android:text="startCodec !!" />
 
-    <CheckBox
-        android:id="@+id/mute_check_box"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="Mute" />
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/mute_check_box"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="Mute" />
+
+        <CheckBox
+            android:id="@+id/flip_horizontal_check_box"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="flip horizontal" />
+
+        <CheckBox
+            android:id="@+id/flip_vertical_check_box"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="flip vertical" />
+
+    </LinearLayout>
+
 
     <ProgressBar
         android:id="@+id/progress_bar"

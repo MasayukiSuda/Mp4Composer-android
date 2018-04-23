@@ -37,6 +37,8 @@ public class Mp4Composer {
     private FillMode fillMode = FillMode.PRESERVE_ASPECT_FIT;
     private FillModeCustomItem fillModeCustomItem;
     private int timeScale = 1;
+    private boolean flipVertical = false;
+    private boolean flipHorizontal = false;
 
     private ExecutorService executorService;
 
@@ -61,8 +63,18 @@ public class Mp4Composer {
         return this;
     }
 
-    public Mp4Composer mute(boolean mute){
+    public Mp4Composer mute(boolean mute) {
         this.mute = mute;
+        return this;
+    }
+
+    public Mp4Composer flipVertical(boolean flipVertical) {
+        this.flipVertical = flipVertical;
+        return this;
+    }
+
+    public Mp4Composer flipHorizontal(boolean flipHorizontal) {
+        this.flipHorizontal = flipHorizontal;
         return this;
     }
 
@@ -190,7 +202,9 @@ public class Mp4Composer {
                             srcVideoResolution,
                             fillMode,
                             fillModeCustomItem,
-                            timeScale
+                            timeScale,
+                            flipVertical,
+                            flipHorizontal
                     );
 
                 } catch (Exception e) {

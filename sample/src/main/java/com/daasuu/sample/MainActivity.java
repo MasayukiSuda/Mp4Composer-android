@@ -48,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private Bitmap bitmap;
 
     private CheckBox muteCheckBox;
+    private CheckBox flipVerticalCheckBox;
+    private CheckBox flipHorizontalCheckBox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         muteCheckBox = findViewById(R.id.mute_check_box);
+        flipVerticalCheckBox = findViewById(R.id.flip_vertical_check_box);
+        flipHorizontalCheckBox = findViewById(R.id.flip_horizontal_check_box);
 
         findViewById(R.id.start_codec_button).setOnClickListener(v -> {
             v.setEnabled(false);
@@ -107,7 +111,6 @@ public class MainActivity extends AppCompatActivity {
         final ProgressBar progressBar = findViewById(R.id.progress_bar);
         progressBar.setMax(100);
 
-        boolean mute = muteCheckBox.isChecked();
 
         mp4Composer = null;
         mp4Composer = new Mp4Composer(videoItem.getPath(), videoPath)
@@ -115,7 +118,9 @@ public class MainActivity extends AppCompatActivity {
                 //.size(720, 1280)
                 .fillMode(FillMode.PRESERVE_ASPECT_FIT)
                 .filter(new GlLutFilter(bitmap))
-                .mute(mute)
+                .mute(muteCheckBox.isChecked())
+                .flipHorizontal(flipHorizontalCheckBox.isChecked())
+                .flipVertical(flipVerticalCheckBox.isChecked())
                 .listener(new Mp4Composer.Listener() {
                     @Override
                     public void onProgress(double progress) {

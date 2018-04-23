@@ -53,6 +53,8 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
     private Resolution inputResolution;
     private FillMode fillMode = FillMode.PRESERVE_ASPECT_FIT;
     private FillModeCustomItem fillModeCustomItem;
+    private boolean flipVertical = false;
+    private boolean flipHorizontal = false;
 
     /**
      * Creates an DecoderSurface using the current EGL context (rather than establishing a
@@ -161,18 +163,22 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
 
         Matrix.setIdentityM(MVPMatrix, 0);
 
+        float scaleDirectionX = flipHorizontal ? -1 : 1;
+        float scaleDirectionY = flipVertical ? -1 : 1;
+
+
         float scale[];
         switch (fillMode) {
             case PRESERVE_ASPECT_FIT:
                 scale = FillMode.getScaleAspectFit(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
-                Matrix.scaleM(MVPMatrix, 0, scale[0], scale[1], 1);
+                Matrix.scaleM(MVPMatrix, 0, scale[0] * scaleDirectionX, scale[1] * scaleDirectionY, 1);
                 if (rotation != Rotation.NORMAL) {
                     Matrix.rotateM(MVPMatrix, 0, -rotation.getRotation(), 0.f, 0.f, 1.f);
                 }
                 break;
             case PRESERVE_ASPECT_CROP:
                 scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
-                Matrix.scaleM(MVPMatrix, 0, scale[0], scale[1], 1);
+                Matrix.scaleM(MVPMatrix, 0, scale[0] * scaleDirectionX, scale[1] * scaleDirectionY, 1);
                 if (rotation != Rotation.NORMAL) {
                     Matrix.rotateM(MVPMatrix, 0, -rotation.getRotation(), 0.f, 0.f, 1.f);
                 }
@@ -185,14 +191,14 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
                     if (fillModeCustomItem.getRotate() == 0 || fillModeCustomItem.getRotate() == 180) {
                         Matrix.scaleM(MVPMatrix,
                                 0,
-                                fillModeCustomItem.getScale() * scale[0],
-                                fillModeCustomItem.getScale() * scale[1],
+                                fillModeCustomItem.getScale() * scale[0] * scaleDirectionX,
+                                fillModeCustomItem.getScale() * scale[1] * scaleDirectionY,
                                 1);
                     } else {
                         Matrix.scaleM(MVPMatrix,
                                 0,
-                                fillModeCustomItem.getScale() * scale[0] * (1 / fillModeCustomItem.getVideoWidth() * fillModeCustomItem.getVideoHeight()),
-                                fillModeCustomItem.getScale() * scale[1] * (fillModeCustomItem.getVideoWidth() / fillModeCustomItem.getVideoHeight()),
+                                fillModeCustomItem.getScale() * scale[0] * (1 / fillModeCustomItem.getVideoWidth() * fillModeCustomItem.getVideoHeight()) * scaleDirectionX,
+                                fillModeCustomItem.getScale() * scale[1] * (fillModeCustomItem.getVideoWidth() / fillModeCustomItem.getVideoHeight()) * scaleDirectionY,
                                 1);
                     }
 
@@ -244,5 +250,13 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     void setFillModeCustomItem(FillModeCustomItem fillModeCustomItem) {
         this.fillModeCustomItem = fillModeCustomItem;
+    }
+
+    public void setFlipVertical(boolean flipVertical) {
+        this.flipVertical = flipVertical;
+    }
+
+    public void setFlipHorizontal(boolean flipHorizontal) {
+        this.flipHorizontal = flipHorizontal;
     }
 }

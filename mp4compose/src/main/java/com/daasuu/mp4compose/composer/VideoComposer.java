@@ -52,7 +52,14 @@ class VideoComposer {
     }
 
 
-    void setUp(GlFilter filter, Rotation rotation, Resolution outputResolution, Resolution inputResolution, FillMode fillMode, FillModeCustomItem fillModeCustomItem) {
+    void setUp(GlFilter filter,
+               Rotation rotation,
+               Resolution outputResolution,
+               Resolution inputResolution,
+               FillMode fillMode,
+               FillModeCustomItem fillModeCustomItem,
+               final boolean flipVertical,
+               final boolean flipHorizontal) {
         mediaExtractor.selectTrack(trackIndex);
         try {
             encoder = MediaCodec.createEncoderByType(outputFormat.getString(MediaFormat.KEY_MIME));
@@ -79,6 +86,8 @@ class VideoComposer {
         decoderSurface.setInputResolution(inputResolution);
         decoderSurface.setFillMode(fillMode);
         decoderSurface.setFillModeCustomItem(fillModeCustomItem);
+        decoderSurface.setFlipHorizontal(flipHorizontal);
+        decoderSurface.setFlipVertical(flipVertical);
 
         try {
             decoder = MediaCodec.createDecoderByType(inputFormat.getString(MediaFormat.KEY_MIME));
