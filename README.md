@@ -22,7 +22,7 @@ Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
 ```groovy
     dependencies {
         // jCenter
-        implementation 'com.daasuu:Mp4Composer-android:0.1.4'
+        implementation 'com.daasuu:Mp4Composer-android:0.1.5'
     }
 ```
 
@@ -68,6 +68,9 @@ Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
 | filter | This filter is OpenGL Shaders to apply effects on video. Custom filters can be created by inheriting <a href="https://github.com/MasayukiSuda/Mp4Composer-android/blob/master/mp4compose/src/main/java/com/daasuu/mp4compose/filter/GlFilter.java">GlFilter.java</a>. , default GlFilter(No filter). Filters is <a href="https://github.com/MasayukiSuda/Mp4Composer-android/tree/master/mp4compose/src/main/java/com/daasuu/mp4compose/filter">here</a>. |
 | videoBitrate | Set Video Bitrate, default video bitrate is 0.25 * 30 * outputWidth * outputHeight |
 | mute | Mute audio track on exported video. Default `mute = false`. |
+| flipVertical | Flip Vertical on exported video. Default `flipVertical = false`. |
+| flipHorizontal | Flip Horizontal on exported video. Default `flipHorizontal = false`. |
+
 
 
 ## References And Special Thanks to
