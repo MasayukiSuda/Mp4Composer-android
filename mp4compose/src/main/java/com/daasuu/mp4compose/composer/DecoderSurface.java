@@ -12,7 +12,6 @@ import android.view.Surface;
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Resolution;
-import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.utils.GlUtils;
 
@@ -48,7 +47,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
     private float[] MVPMatrix = new float[16];
     private float[] STMatrix = new float[16];
 
-    private Rotation rotation = Rotation.NORMAL;
+    private int rotation = 0;
     private Resolution outputResolution;
     private Resolution inputResolution;
     private FillMode fillMode = FillMode.PRESERVE_ASPECT_FIT;
@@ -170,23 +169,23 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
         float scale[];
         switch (fillMode) {
             case PRESERVE_ASPECT_FIT:
-                scale = FillMode.getScaleAspectFit(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
+                scale = FillMode.getScaleAspectFit(rotation, inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
                 Matrix.scaleM(MVPMatrix, 0, scale[0] * scaleDirectionX, scale[1] * scaleDirectionY, 1);
-                if (rotation != Rotation.NORMAL) {
-                    Matrix.rotateM(MVPMatrix, 0, -rotation.getRotation(), 0.f, 0.f, 1.f);
+                if (rotation != 0) {
+                    Matrix.rotateM(MVPMatrix, 0, -rotation, 0.f, 0.f, 1.f);
                 }
                 break;
             case PRESERVE_ASPECT_CROP:
-                scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
+                scale = FillMode.getScaleAspectCrop(rotation, inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
                 Matrix.scaleM(MVPMatrix, 0, scale[0] * scaleDirectionX, scale[1] * scaleDirectionY, 1);
-                if (rotation != Rotation.NORMAL) {
-                    Matrix.rotateM(MVPMatrix, 0, -rotation.getRotation(), 0.f, 0.f, 1.f);
+                if (rotation != 0) {
+                    Matrix.rotateM(MVPMatrix, 0, -rotation, 0.f, 0.f, 1.f);
                 }
                 break;
             case CUSTOM:
                 if (fillModeCustomItem != null) {
                     Matrix.translateM(MVPMatrix, 0, fillModeCustomItem.getTranslateX(), -fillModeCustomItem.getTranslateY(), 0f);
-                    scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
+                    scale = FillMode.getScaleAspectCrop(rotation, inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
 
                     if (fillModeCustomItem.getRotate() == 0 || fillModeCustomItem.getRotate() == 180) {
                         Matrix.scaleM(MVPMatrix,
@@ -202,7 +201,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
                                 1);
                     }
 
-                    Matrix.rotateM(MVPMatrix, 0, -(rotation.getRotation() + fillModeCustomItem.getRotate()), 0.f, 0.f, 1.f);
+                    Matrix.rotateM(MVPMatrix, 0, -(rotation + fillModeCustomItem.getRotate()), 0.f, 0.f, 1.f);
 
 //                    Log.d(TAG, "inputResolution = " + inputResolution.width() + " height = " + inputResolution.height());
 //                    Log.d(TAG, "out = " + outputResolution.width() + " height = " + outputResolution.height());
@@ -231,7 +230,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
         }
     }
 
-    void setRotation(Rotation rotation) {
+    void setRotation(int rotation) {
         this.rotation = rotation;
     }
 
