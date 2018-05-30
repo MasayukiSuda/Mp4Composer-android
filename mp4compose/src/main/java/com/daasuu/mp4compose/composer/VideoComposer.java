@@ -8,7 +8,6 @@ import android.media.MediaFormat;
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Resolution;
-import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.filter.GlFilter;
 
 import java.io.IOException;
@@ -53,7 +52,7 @@ class VideoComposer {
 
 
     void setUp(GlFilter filter,
-               Rotation rotation,
+               int rotation,
                Resolution outputResolution,
                Resolution inputResolution,
                FillMode fillMode,

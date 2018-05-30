@@ -10,7 +10,6 @@ import android.util.Log;
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Resolution;
-import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.filter.GlFilter;
 
 import java.io.FileDescriptor;
@@ -50,7 +49,7 @@ class Mp4ComposerEngine {
             final GlFilter filter,
             final int bitrate,
             final boolean mute,
-            final Rotation rotation,
+            final int rotation,
             final Resolution inputResolution,
             final FillMode fillMode,
             final FillModeCustomItem fillModeCustomItem,

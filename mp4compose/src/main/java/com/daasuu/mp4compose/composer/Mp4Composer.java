@@ -7,7 +7,6 @@ import android.util.Log;
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Resolution;
-import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.filter.IResolutionFilter;
 
@@ -32,7 +31,7 @@ public class Mp4Composer {
     private Resolution outputResolution;
     private int bitrate = -1;
     private boolean mute = false;
-    private Rotation rotation = Rotation.NORMAL;
+    private int rotation = 0;
     private Listener listener;
     private FillMode fillMode = FillMode.PRESERVE_ASPECT_FIT;
     private FillModeCustomItem fillModeCustomItem;
@@ -78,7 +77,7 @@ public class Mp4Composer {
         return this;
     }
 
-    public Mp4Composer rotation(@NonNull Rotation rotation) {
+    public Mp4Composer rotation(int rotation) {
         this.rotation = rotation;
         return this;
     }
@@ -170,8 +169,8 @@ public class Mp4Composer {
                     if (fillMode == FillMode.CUSTOM) {
                         outputResolution = srcVideoResolution;
                     } else {
-                        Rotation rotate = Rotation.fromInt(rotation.getRotation() + videoRotate);
-                        if (rotate == Rotation.ROTATION_90 || rotate == Rotation.ROTATION_270) {
+                        int rotate = rotation + videoRotate;
+                        if (rotate == 90 || rotate == 270) {
                             outputResolution = new Resolution(srcVideoResolution.height(), srcVideoResolution.width());
                         } else {
                             outputResolution = srcVideoResolution;
@@ -183,7 +182,7 @@ public class Mp4Composer {
                     timeScale = 1;
                 }
 
-                Log.d(TAG, "rotation = " + (rotation.getRotation() + videoRotate));
+                Log.d(TAG, "rotation = " + (rotation + videoRotate));
                 Log.d(TAG, "inputResolution width = " + srcVideoResolution.width() + " height = " + srcVideoResolution.height());
                 Log.d(TAG, "outputResolution width = " + outputResolution.width() + " height = " + outputResolution.height());
                 Log.d(TAG, "fillMode = " + fillMode);
@@ -198,7 +197,7 @@ public class Mp4Composer {
                             filter,
                             bitrate,
                             mute,
-                            Rotation.fromInt(rotation.getRotation() + videoRotate),
+                            rotation + videoRotate,
                             srcVideoResolution,
                             fillMode,
                             fillModeCustomItem,
