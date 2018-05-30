@@ -29,7 +29,7 @@ Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
 ## Usage
 ```
     new Mp4Composer(srcMp4Path, destMp4Path)
-            .rotation(Rotation.ROTATION_90)
+            .rotation(90)
             .size((width) 540, (height) 960)
             .fillMode(FillMode.PRESERVE_ASPECT_FIT)
             .filter(new GlSepiaFilter())
@@ -62,11 +62,11 @@ Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
 ## Builder Method
 | method | description |
 |:---|:---|
-| rotation | Rotation of the movie, default Rotation.NORMAL |
-| size | Resolution of the movie, default same resolution of src movie |
-| fillMode | Options for scaling the bounds of an movie. PRESERVE_ASPECT_FIT is fit center. PRESERVE_ASPECT_CROP is center crop , default PRESERVE_ASPECT_FIT |
+| rotation | Rotation of the movie in degrees, default 0. |
+| size | Resolution of the movie, default same resolution of src movie. |
+| fillMode | Options for scaling the bounds of an movie. PRESERVE_ASPECT_FIT is fit center. PRESERVE_ASPECT_CROP is center crop , default PRESERVE_ASPECT_FIT. |
 | filter | This filter is OpenGL Shaders to apply effects on video. Custom filters can be created by inheriting <a href="https://github.com/MasayukiSuda/Mp4Composer-android/blob/master/mp4compose/src/main/java/com/daasuu/mp4compose/filter/GlFilter.java">GlFilter.java</a>. , default GlFilter(No filter). Filters is <a href="https://github.com/MasayukiSuda/Mp4Composer-android/tree/master/mp4compose/src/main/java/com/daasuu/mp4compose/filter">here</a>. |
-| videoBitrate | Set Video Bitrate, default video bitrate is 0.25 * 30 * outputWidth * outputHeight |
+| videoBitrate | Set Video Bitrate, default video bitrate is 0.25 * 30 * outputWidth * outputHeight. |
 | mute | Mute audio track on exported video. Default `mute = false`. |
 | flipVertical | Flip Vertical on exported video. Default `flipVertical = false`. |
 | flipHorizontal | Flip Horizontal on exported video. Default `flipHorizontal = false`. |
