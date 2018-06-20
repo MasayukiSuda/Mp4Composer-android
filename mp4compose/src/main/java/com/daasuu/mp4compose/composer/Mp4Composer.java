@@ -160,10 +160,12 @@ public class Mp4Composer {
                     ((IResolutionFilter) filter).setResolution(outputResolution);
                 }
 
+                if (fillMode == null) {
+                    fillMode = FillMode.PRESERVE_ASPECT_FIT;
+                }
+
                 if (fillModeCustomItem != null) {
                     fillMode = FillMode.CUSTOM;
-                } else {
-                    fillMode = FillMode.PRESERVE_ASPECT_FIT;
                 }
 
                 if (outputResolution == null) {
