@@ -156,9 +156,6 @@ public class Mp4Composer {
                 if (filter == null) {
                     filter = new GlFilter();
                 }
-                if (filter instanceof IResolutionFilter) {
-                    ((IResolutionFilter) filter).setResolution(outputResolution);
-                }
 
                 if (fillMode == null) {
                     fillMode = FillMode.PRESERVE_ASPECT_FIT;
@@ -179,6 +176,9 @@ public class Mp4Composer {
                             outputResolution = srcVideoResolution;
                         }
                     }
+                }
+                if (filter instanceof IResolutionFilter) {
+                    ((IResolutionFilter) filter).setResolution(outputResolution);
                 }
 
                 if (timeScale < 2) {
