@@ -19,11 +19,20 @@ Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
 
 
 ## Gradle
+Step 1. Add the JitPack repository to your build file
 ```groovy
-    dependencies {
-        // jCenter
-        implementation 'com.daasuu:Mp4Composer-android:0.1.7'
-    }
+allprojects {
+	repositories {
+		...
+		maven { url 'https://jitpack.io' }
+	}
+}
+```
+Step 2. Add the dependency
+```groovy
+dependencies {
+        implementation 'com.github.MasayukiSuda:Mp4Composer-android:v0.1.8'
+}
 ```
 
 ## Usage
