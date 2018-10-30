@@ -1,7 +1,6 @@
 package com.daasuu.mp4compose.composer;
 
 import android.media.MediaMetadataRetriever;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.daasuu.mp4compose.FillMode;
@@ -43,12 +42,12 @@ public class Mp4Composer {
     private ExecutorService executorService;
 
 
-    public Mp4Composer(@NonNull final String srcPath, @NonNull final String destPath) {
+    public Mp4Composer(final String srcPath, final String destPath) {
         this.srcPath = srcPath;
         this.destPath = destPath;
     }
 
-    public Mp4Composer filter(@NonNull GlFilter filter) {
+    public Mp4Composer filter(GlFilter filter) {
         this.filter = filter;
         return this;
     }
@@ -78,24 +77,24 @@ public class Mp4Composer {
         return this;
     }
 
-    public Mp4Composer rotation(@NonNull Rotation rotation) {
+    public Mp4Composer rotation(Rotation rotation) {
         this.rotation = rotation;
         return this;
     }
 
-    public Mp4Composer fillMode(@NonNull FillMode fillMode) {
+    public Mp4Composer fillMode(FillMode fillMode) {
         this.fillMode = fillMode;
         return this;
     }
 
-    public Mp4Composer customFillMode(@NonNull FillModeCustomItem fillModeCustomItem) {
+    public Mp4Composer customFillMode(FillModeCustomItem fillModeCustomItem) {
         this.fillModeCustomItem = fillModeCustomItem;
         this.fillMode = FillMode.CUSTOM;
         return this;
     }
 
 
-    public Mp4Composer listener(@NonNull Listener listener) {
+    public Mp4Composer listener(Listener listener) {
         this.listener = listener;
         return this;
     }
@@ -256,16 +255,21 @@ public class Mp4Composer {
     }
 
     private int getVideoRotation(String videoFilePath) {
-        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
         try {
+            MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
             mediaMetadataRetriever.setDataSource(videoFilePath);
+            String orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+            return Integer.valueOf(orientation);
+        } catch (IllegalArgumentException e) {
+            Log.e("MediaMetadataRetriever", "getVideoRotation IllegalArgumentException");
+            return 0;
+        } catch (RuntimeException e) {
+            Log.e("MediaMetadataRetriever", "getVideoRotation RuntimeException");
+            return 0;
         } catch (Exception e) {
-            Log.e("MediaMetadataRetriever", "getVideoRotation error");
+            Log.e("MediaMetadataRetriever", "getVideoRotation Exception");
             return 0;
         }
-        String orientation = mediaMetadataRetriever.extractMetadata(
-                MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
-        return Integer.valueOf(orientation);
     }
 
     private int calcBitRate(int width, int height) {

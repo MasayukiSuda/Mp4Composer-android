@@ -1,34 +1,34 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion COMPILE_SDK_VERSION as int
-    buildToolsVersion BUILD_TOOLS_VERSION
-    defaultConfig {
-        applicationId "com.daasuu.mp4composer"
-        minSdkVersion COMPILE_MIN_SDK_VERSION as int
-        targetSdkVersion COMPILE_SDK_VERSION as int
+  compileSdkVersion COMPILE_SDK_VERSION as int
+  buildToolsVersion BUILD_TOOLS_VERSION
+  defaultConfig {
+    applicationId "com.daasuu.mp4composer"
+    minSdkVersion COMPILE_MIN_SDK_VERSION as int
+    targetSdkVersion COMPILE_SDK_VERSION as int
 
-        versionCode 1
-        versionName "1.0"
+    versionCode 1
+    versionName "1.0"
+  }
+  buildTypes {
+    release {
+      minifyEnabled false
+      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
     }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
+  }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:appcompat-v7:27.1.1'
+  implementation fileTree(dir: 'libs', include: ['*.jar'])
+  implementation 'com.android.support:appcompat-v7:28.0.0'
 
-    implementation 'com.github.bumptech.glide:glide:3.8.0'
+  implementation 'com.github.bumptech.glide:glide:3.8.0'
 
-    implementation project(':mp4compose')
+  implementation project(':mp4compose')
 }
