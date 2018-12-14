@@ -33,6 +33,7 @@ class Mp4ComposerEngine {
     private MediaMuxer mediaMuxer;
     private ProgressCallback progressCallback;
     private long durationUs;
+    private MediaMetadataRetriever mediaMetadataRetriever;
 
 
     void setDataSource(FileDescriptor fileDescriptor) {
@@ -64,7 +65,7 @@ class Mp4ComposerEngine {
             mediaExtractor = new MediaExtractor();
             mediaExtractor.setDataSource(inputFileDescriptor);
             mediaMuxer = new MediaMuxer(destPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+            mediaMetadataRetriever = new MediaMetadataRetriever();
             mediaMetadataRetriever.setDataSource(inputFileDescriptor);
             try {
                 durationUs = Long.parseLong(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) * 1000;
@@ -151,6 +152,14 @@ class Mp4ComposerEngine {
                 }
             } catch (RuntimeException e) {
                 Log.e(TAG, "Failed to release mediaMuxer.", e);
+            }
+            try {
+                if (mediaMetadataRetriever != null) {
+                    mediaMetadataRetriever.release();
+                    mediaMetadataRetriever = null;
+                }
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Failed to release mediaMetadataRetriever.", e);
             }
         }
 
