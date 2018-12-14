@@ -255,8 +255,9 @@ public class Mp4Composer {
     }
 
     private int getVideoRotation(String videoFilePath) {
+        MediaMetadataRetriever mediaMetadataRetriever = null;
         try {
-            MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+            mediaMetadataRetriever = new MediaMetadataRetriever();
             mediaMetadataRetriever.setDataSource(videoFilePath);
             String orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
             return Integer.valueOf(orientation);
@@ -269,6 +270,14 @@ public class Mp4Composer {
         } catch (Exception e) {
             Log.e("MediaMetadataRetriever", "getVideoRotation Exception");
             return 0;
+        } finally {
+            try {
+                if (mediaMetadataRetriever != null) {
+                    mediaMetadataRetriever.release();
+                }
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Failed to release mediaMetadataRetriever.", e);
+            }
         }
     }
 
@@ -279,13 +288,23 @@ public class Mp4Composer {
     }
 
     private Resolution getVideoResolution(final String path, final int rotation) {
-        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        retriever.setDataSource(path);
-        int width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-        int height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
-        retriever.release();
+        MediaMetadataRetriever retriever = null;
+        try {
+            retriever = new MediaMetadataRetriever();
+            retriever.setDataSource(path);
+            int width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+            int height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
 
-        return new Resolution(width, height);
+            return new Resolution(width, height);
+        } finally {
+            try {
+                if (retriever != null) {
+                    retriever.release();
+                }
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Failed to release mediaMetadataRetriever.", e);
+            }
+        }
     }
 
 }
