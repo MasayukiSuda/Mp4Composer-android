@@ -1,7 +1,7 @@
 # Mp4Composer-android
 [![Platform](https://img.shields.io/badge/platform-android-green.svg)](http://developer.android.com/index.html)
 <img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat">
-[![API](https://img.shields.io/badge/API-19%2B-blue.svg?style=flat)](https://android-arsenal.com/api?level=19)
+[![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
 
 This library generate an Mp4 movie using Android MediaCodec API and apply filter, scale, and rotate Mp4.<br>
 Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
