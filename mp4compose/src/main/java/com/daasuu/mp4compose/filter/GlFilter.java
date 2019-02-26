@@ -161,7 +161,11 @@ public class GlFilter {
         return location;
     }
 
-    public float[] clearColor = new float[]{0f, 0f, 0f, 1f};
+    private float[] clearColor = new float[]{0f, 0f, 0f, 1f};
+
+    public float[] getClearColor() {
+        return clearColor;
+    }
 
     public void setClearColor(float red,
                               float green,

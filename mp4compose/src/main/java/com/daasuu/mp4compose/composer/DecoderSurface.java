@@ -229,7 +229,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
         if (filter != null) {
             filterFramebufferObject.enable();
             GLES20.glViewport(0, 0, filterFramebufferObject.getWidth(), filterFramebufferObject.getHeight());
-            GLES20.glClearColor(filter.clearColor[0], filter.clearColor[1], filter.clearColor[2], filter.clearColor[3]);
+            GLES20.glClearColor(filter.getClearColor()[0], filter.getClearColor()[1], filter.getClearColor()[2], filter.getClearColor()[3]);
         }
 
         GLES20.glClear(GL_COLOR_BUFFER_BIT);
