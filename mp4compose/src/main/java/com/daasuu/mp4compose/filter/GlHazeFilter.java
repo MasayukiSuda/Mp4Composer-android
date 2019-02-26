@@ -2,8 +2,6 @@ package com.daasuu.mp4compose.filter;
 
 import android.opengl.GLES20;
 
-import com.daasuu.mp4compose.utils.GlUtils;
-
 /**
  * Created by sudamasayuki on 2018/01/06.
  */
@@ -11,10 +9,9 @@ import com.daasuu.mp4compose.utils.GlUtils;
 public class GlHazeFilter extends GlFilter {
 
     private static final String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;" +
-                    "varying vec2 vTextureCoord;" +
-                    "uniform samplerExternalOES sTexture;\n" +
+            "precision mediump float;" +
+                    "varying highp vec2 vTextureCoord;" +
+                    "uniform lowp sampler2D sTexture;" +
                     "uniform lowp float distance;" +
                     "uniform highp float slope;" +
 
@@ -32,7 +29,7 @@ public class GlHazeFilter extends GlFilter {
     private float slope = 0.0f;
 
     public GlHazeFilter() {
-        super(GlUtils.DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
+        super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
     }
 
     public float getDistance() {

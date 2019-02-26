@@ -6,10 +6,10 @@ import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
 import android.util.Log;
+import android.util.Size;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
-import com.daasuu.mp4compose.Resolution;
 import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.filter.GlFilter;
 
@@ -47,12 +47,12 @@ class Mp4ComposerEngine {
 
     void compose(
             final String destPath,
-            final Resolution outputResolution,
+            final Size outputResolution,
             final GlFilter filter,
             final int bitrate,
             final boolean mute,
             final Rotation rotation,
-            final Resolution inputResolution,
+            final Size inputResolution,
             final FillMode fillMode,
             final FillModeCustomItem fillModeCustomItem,
             final int timeScale,
@@ -74,7 +74,7 @@ class Mp4ComposerEngine {
             }
             Log.d(TAG, "Duration (us): " + durationUs);
 
-            MediaFormat videoOutputFormat = MediaFormat.createVideoFormat("video/avc", outputResolution.width(), outputResolution.height());
+            MediaFormat videoOutputFormat = MediaFormat.createVideoFormat("video/avc", outputResolution.getWidth(), outputResolution.getHeight());
 
             videoOutputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
             videoOutputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);

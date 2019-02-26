@@ -1,16 +1,14 @@
 package com.daasuu.mp4compose.filter;
 
 import android.content.res.Resources;
-import android.graphics.SurfaceTexture;
-import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 
-import com.daasuu.mp4compose.utils.GlUtils;
+import com.daasuu.mp4compose.gl.GlFramebufferObject;
+import com.daasuu.mp4compose.utils.EglUtil;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.util.HashMap;
+
+import static android.opengl.GLES20.GL_FLOAT;
 
 /**
  * Created by sudamasayuki on 2017/11/14.
@@ -18,32 +16,54 @@ import java.util.HashMap;
 
 public class GlFilter {
 
-    private static final int FLOAT_SIZE_BYTES = 4;
-    private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 5 * FLOAT_SIZE_BYTES;
-    private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET = 0;
-    private static final int TRIANGLE_VERTICES_DATA_UV_OFFSET = 3;
-    private final float[] triangleVerticesData = {
-            // X, Y, Z, U, V
-            -1.0f, -1.0f, 0, 0.f, 0.f,
-            1.0f, -1.0f, 0, 1.f, 0.f,
-            -1.0f, 1.0f, 0, 0.f, 1.f,
-            1.0f, 1.0f, 0, 1.f, 1.f,
-    };
-    private FloatBuffer triangleVertices;
+    public static final String DEFAULT_UNIFORM_SAMPLER = "sTexture";
 
-    private String vertexShaderSource;
+    protected static final String DEFAULT_VERTEX_SHADER =
+            "attribute highp vec4 aPosition;\n" +
+                    "attribute highp vec4 aTextureCoord;\n" +
+                    "varying highp vec2 vTextureCoord;\n" +
+                    "void main() {\n" +
+                    "gl_Position = aPosition;\n" +
+                    "vTextureCoord = aTextureCoord.xy;\n" +
+                    "}\n";
+
+    protected static final String DEFAULT_FRAGMENT_SHADER =
+            "precision mediump float;\n" +
+                    "varying highp vec2 vTextureCoord;\n" +
+                    "uniform lowp sampler2D sTexture;\n" +
+                    "void main() {\n" +
+                    "gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
+                    "}\n";
+
+    private static final float[] VERTICES_DATA = new float[]{
+            // X, Y, Z, U, V
+            -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+            1.0f, -1.0f, 0.0f, 1.0f, 0.0f
+    };
+
+    private static final int FLOAT_SIZE_BYTES = 4;
+    protected static final int VERTICES_DATA_POS_SIZE = 3;
+    protected static final int VERTICES_DATA_UV_SIZE = 2;
+    protected static final int VERTICES_DATA_STRIDE_BYTES = (VERTICES_DATA_POS_SIZE + VERTICES_DATA_UV_SIZE) * FLOAT_SIZE_BYTES;
+    protected static final int VERTICES_DATA_POS_OFFSET = 0 * FLOAT_SIZE_BYTES;
+    protected static final int VERTICES_DATA_UV_OFFSET = VERTICES_DATA_POS_OFFSET + VERTICES_DATA_POS_SIZE * FLOAT_SIZE_BYTES;
+
+    private final String vertexShaderSource;
     private String fragmentShaderSource;
 
-
     private int program;
-    private int textureID = -12345;
-    protected float[] clearColor = new float[]{0f, 0f, 0f, 1f};
 
-    private final HashMap<String, Integer> handleMap = new HashMap<>();
+    private int vertexShader;
+    private int fragmentShader;
 
+    private int vertexBufferName;
+
+    private final HashMap<String, Integer> handleMap = new HashMap<String, Integer>();
 
     public GlFilter() {
-        this(GlUtils.DEFAULT_VERTEX_SHADER, GlUtils.DEFAULT_FRAGMENT_SHADER);
+        this(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER);
     }
 
     public GlFilter(final Resources res, final int vertexShaderSourceResId, final int fragmentShaderSourceResId) {
@@ -53,89 +73,75 @@ public class GlFilter {
     public GlFilter(final String vertexShaderSource, final String fragmentShaderSource) {
         this.vertexShaderSource = vertexShaderSource;
         this.fragmentShaderSource = fragmentShaderSource;
+    }
 
-        triangleVertices = ByteBuffer.allocateDirect(
-                triangleVerticesData.length * FLOAT_SIZE_BYTES)
-                .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        triangleVertices.put(triangleVerticesData).position(0);
+    public void setup() {
+        release();
+        vertexShader = EglUtil.loadShader(vertexShaderSource, GLES20.GL_VERTEX_SHADER);
+        fragmentShader = EglUtil.loadShader(fragmentShaderSource, GLES20.GL_FRAGMENT_SHADER);
+        program = EglUtil.createProgram(vertexShader, fragmentShader);
+        vertexBufferName = EglUtil.createBuffer(VERTICES_DATA);
+
+        getHandle("aPosition");
+        getHandle("aTextureCoord");
+        getHandle("sTexture");
+    }
+
+    public void setFragmentShaderSource(String fragmentShaderSource) {
+        this.fragmentShaderSource = fragmentShaderSource;
     }
 
 
-    public int getTextureId() {
-        return textureID;
+    public void setFrameSize(final int width, final int height) {
+        // do nothing
     }
 
+    public void release() {
+        GLES20.glDeleteProgram(program);
+        program = 0;
+        GLES20.glDeleteShader(vertexShader);
+        vertexShader = 0;
+        GLES20.glDeleteShader(fragmentShader);
+        fragmentShader = 0;
+        GLES20.glDeleteBuffers(1, new int[]{vertexBufferName}, 0);
+        vertexBufferName = 0;
 
-    public void draw(SurfaceTexture surfaceTexture, float[] STMatrix, float[] MVPMatrix) {
-        GlUtils.checkGlError("onDrawFrame start");
+        handleMap.clear();
+    }
 
+    //
+    public void draw(final int texName, final GlFramebufferObject fbo) {
+        useProgram();
 
-        GLES20.glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
-        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glUseProgram(program);
-        GlUtils.checkGlError("glUseProgram");
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexBufferName);
+        GLES20.glEnableVertexAttribArray(getHandle("aPosition"));
+        GLES20.glVertexAttribPointer(getHandle("aPosition"), VERTICES_DATA_POS_SIZE, GL_FLOAT, false, VERTICES_DATA_STRIDE_BYTES, VERTICES_DATA_POS_OFFSET);
+        GLES20.glEnableVertexAttribArray(getHandle("aTextureCoord"));
+        GLES20.glVertexAttribPointer(getHandle("aTextureCoord"), VERTICES_DATA_UV_SIZE, GL_FLOAT, false, VERTICES_DATA_STRIDE_BYTES, VERTICES_DATA_UV_OFFSET);
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureID);
-        triangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
-        GLES20.glVertexAttribPointer(getHandle("aPosition"), 3, GLES20.GL_FLOAT, false,
-                TRIANGLE_VERTICES_DATA_STRIDE_BYTES, triangleVertices);
-        GLES20.glEnableVertexAttribArray(getHandle("aPosition"));
-
-        triangleVertices.position(TRIANGLE_VERTICES_DATA_UV_OFFSET);
-        GLES20.glVertexAttribPointer(getHandle("aTextureCoord"), 2, GLES20.GL_FLOAT, false,
-                TRIANGLE_VERTICES_DATA_STRIDE_BYTES, triangleVertices);
-        GlUtils.checkGlError("glVertexAttribPointer aTextureHandle");
-
-        GLES20.glEnableVertexAttribArray(getHandle("aTextureCoord"));
-        GlUtils.checkGlError("glEnableVertexAttribArray aTextureHandle");
-
-        surfaceTexture.getTransformMatrix(STMatrix);
-
-        GLES20.glUniformMatrix4fv(getHandle("uMVPMatrix"), 1, false, MVPMatrix, 0);
-        GLES20.glUniformMatrix4fv(getHandle("uSTMatrix"), 1, false, STMatrix, 0);
-
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texName);
+        GLES20.glUniform1i(getHandle("sTexture"), 0);
 
         onDraw();
 
-
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-        GlUtils.checkGlError("glDrawArrays");
 
-        GLES20.glFinish();
+        GLES20.glDisableVertexAttribArray(getHandle("aPosition"));
+        GLES20.glDisableVertexAttribArray(getHandle("aTextureCoord"));
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
     }
 
     protected void onDraw() {
     }
 
+    protected final void useProgram() {
+        GLES20.glUseProgram(program);
+    }
 
-    public void setUpSurface() {
-        final int vertexShader = GlUtils.loadShader(vertexShaderSource, GLES20.GL_VERTEX_SHADER);
-        final int fragmentShader = GlUtils.loadShader(fragmentShaderSource, GLES20.GL_FRAGMENT_SHADER);
-        program = GlUtils.createProgram(vertexShader, fragmentShader);
-        if (program == 0) {
-            throw new RuntimeException("failed creating program");
-        }
-
-        getHandle("aPosition");
-        getHandle("aTextureCoord");
-        getHandle("uMVPMatrix");
-        getHandle("uSTMatrix");
-
-        int[] textures = new int[1];
-        GLES20.glGenTextures(1, textures, 0);
-        textureID = textures[0];
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureID);
-        GlUtils.checkGlError("glBindTexture textureID");
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER,
-                GLES20.GL_LINEAR);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER,
-                GLES20.GL_LINEAR);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S,
-                GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T,
-                GLES20.GL_CLAMP_TO_EDGE);
-        GlUtils.checkGlError("glTexParameter");
+    protected final int getVertexBufferName() {
+        return vertexBufferName;
     }
 
     protected final int getHandle(final String name) {
@@ -151,12 +157,11 @@ public class GlFilter {
         if (location == -1) {
             throw new IllegalStateException("Could not get attrib or uniform location for " + name);
         }
-        handleMap.put(name, location);
+        handleMap.put(name, Integer.valueOf(location));
         return location;
     }
 
-    public void release() {
-    }
+    public float[] clearColor = new float[]{0f, 0f, 0f, 1f};
 
     public void setClearColor(float red,
                               float green,
@@ -164,4 +169,5 @@ public class GlFilter {
                               float alpha) {
         this.clearColor = new float[]{red, green, blue, alpha};
     }
+
 }

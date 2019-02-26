@@ -4,8 +4,6 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.opengl.GLES20;
 
-import com.daasuu.mp4compose.utils.GlUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -21,10 +19,9 @@ import java.util.LinkedList;
 public class GlToneCurveFilter extends GlFilter {
 
     private final static String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    " precision mediump float;\n" +
-                    " varying vec2 vTextureCoord;\n" +
-                    " uniform samplerExternalOES sTexture;\n" +
+            "precision mediump float;\n" +
+                    " varying highp vec2 vTextureCoord;\n" +
+                    " uniform lowp sampler2D sTexture;\n" +
                     " uniform mediump sampler2D toneCurveTexture;\n" +
                     "\n" +
                     " void main()\n" +
@@ -55,7 +52,7 @@ public class GlToneCurveFilter extends GlFilter {
 
 
     public GlToneCurveFilter(InputStream input) {
-        super(GlUtils.DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
+        super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
         PointF[] defaultCurvePoints = new PointF[]{new PointF(0.0f, 0.0f), new PointF(0.5f, 0.5f), new PointF(1.0f, 1.0f)};
         rgbCompositeControlPoints = defaultCurvePoints;
         redControlPoints = defaultCurvePoints;
@@ -74,8 +71,8 @@ public class GlToneCurveFilter extends GlFilter {
     }
 
     @Override
-    public void setUpSurface() {
-        super.setUpSurface();
+    public void setup() {
+        super.setup();// 1
         GLES20.glGenTextures(1, textures, 0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
 

@@ -5,10 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 
-import com.daasuu.mp4compose.utils.GlUtils;
+import com.daasuu.mp4compose.utils.EglUtil;
 
 //OpenGL Lut filter using 512x512 color LUTs
-public class GlLut512Filter extends GlFilter{
+public class GlLut512Filter extends GlFilter {
 
     private int hTex;
     private final int NO_TEXTURE = -1;
@@ -18,7 +18,7 @@ public class GlLut512Filter extends GlFilter{
             "#extension GL_OES_EGL_image_external : require\n" +
                     "precision mediump float;" +
                     "uniform mediump sampler2D lutTexture; \n" +
-                    "uniform samplerExternalOES sTexture; \n" +
+                    "uniform lowp sampler2D sTexture; \n" +
                     "varying vec2 vTextureCoord; \n" +
                     "vec4 lookup(in vec4 textureColor, in sampler2D lookupTable);\n" +
                     "void main() {\n" +
@@ -53,22 +53,27 @@ public class GlLut512Filter extends GlFilter{
                     "}";
 
     public GlLut512Filter(Bitmap bitmap) {
-        super(GlUtils.DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
+        super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
         this.lutTexture = bitmap;
         hTex = NO_TEXTURE;
     }
 
     public GlLut512Filter(Resources resources, int fxID) {
-        super(GlUtils.DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
+        super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
         this.lutTexture = BitmapFactory.decodeResource(resources, fxID);
         hTex = NO_TEXTURE;
     }
 
+
     @Override
-    public void setUpSurface() {
-        super.setUpSurface();
-        if (hTex == NO_TEXTURE) {
-            hTex = GlUtils.loadTexture(lutTexture, NO_TEXTURE, false);
+    public void setup() {
+        super.setup();
+        loadTexture();
+    }
+
+    private void loadTexture() {
+        if (hTex == EglUtil.NO_TEXTURE) {
+            hTex = EglUtil.loadTexture(lutTexture, EglUtil.NO_TEXTURE, false);
         }
     }
 

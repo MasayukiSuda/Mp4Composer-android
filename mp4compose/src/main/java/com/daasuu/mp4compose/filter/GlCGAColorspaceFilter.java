@@ -1,7 +1,5 @@
 package com.daasuu.mp4compose.filter;
 
-import com.daasuu.mp4compose.utils.GlUtils;
-
 /**
  * Created by sudamasayuki on 2018/01/06.
  */
@@ -9,11 +7,10 @@ import com.daasuu.mp4compose.utils.GlUtils;
 public class GlCGAColorspaceFilter extends GlFilter {
 
     private static final String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;" +
+            "precision mediump float;" +
 
                     "varying vec2 vTextureCoord;" +
-                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform lowp sampler2D sTexture;" +
 
                     "void main() {" +
                     "highp vec2 sampleDivisor = vec2(1.0 / 200.0, 1.0 / 320.0);" +
@@ -53,7 +50,7 @@ public class GlCGAColorspaceFilter extends GlFilter {
 
 
     public GlCGAColorspaceFilter() {
-        super(GlUtils.DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
+        super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
     }
 
 }

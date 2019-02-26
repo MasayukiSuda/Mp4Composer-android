@@ -9,11 +9,8 @@ import android.opengl.GLES20;
 public class GlGaussianBlurFilter extends GlFilter {
 
     private static final String VERTEX_SHADER =
-            "uniform mat4 uMVPMatrix;\n" +
-                    "uniform mat4 uSTMatrix;\n" +
-                    "attribute vec4 aPosition;\n" +
-                    "attribute vec4 aTextureCoord;\n" +
-
+            "attribute vec4 aPosition;" +
+                    "attribute vec4 aTextureCoord;" +
 
                     "const lowp int GAUSSIAN_SAMPLES = 9;" +
 
@@ -24,8 +21,8 @@ public class GlGaussianBlurFilter extends GlFilter {
                     "varying highp vec2 blurCoordinates[GAUSSIAN_SAMPLES];" +
 
                     "void main() {" +
-                    "  gl_Position = uMVPMatrix * aPosition;\n" +
-                    "  highp vec2 vTextureCoord = (uSTMatrix * aTextureCoord).xy;\n" +
+                    "gl_Position = aPosition;" +
+                    "highp vec2 vTextureCoord = aTextureCoord.xy;" +
 
                     // Calculate the positions for the blur
                     "int multiplier = 0;" +
@@ -41,13 +38,12 @@ public class GlGaussianBlurFilter extends GlFilter {
                     "}";
 
     private static final String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;" +
+            "precision mediump float;" +
 
                     "const lowp int GAUSSIAN_SAMPLES = 9;" +
                     "varying highp vec2 blurCoordinates[GAUSSIAN_SAMPLES];" +
 
-                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform lowp sampler2D sTexture;" +
 
                     "void main() {" +
                     "lowp vec4 sum = vec4(0.0);" +
@@ -104,6 +100,5 @@ public class GlGaussianBlurFilter extends GlFilter {
         GLES20.glUniform1f(getHandle("texelHeightOffset"), texelHeightOffset);
         GLES20.glUniform1f(getHandle("blurSize"), blurSize);
     }
-
 }
 

@@ -42,13 +42,6 @@ public class GlWatermarkFilter extends GlOverlayFilter {
         }
     }
 
-    @Override
-    public void release() {
-        if (bitmap != null && !bitmap.isRecycled()) {
-            bitmap.recycle();
-        }
-    }
-
     public enum Position {
         LEFT_TOP,
         LEFT_BOTTOM,

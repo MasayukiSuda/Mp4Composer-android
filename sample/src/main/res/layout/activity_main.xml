@@ -5,41 +5,69 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <Button
-        android:id="@+id/start_codec_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:enabled="false"
-        android:text="startCodec !!" />
-
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="wrap_content">
 
-        <CheckBox
-            android:id="@+id/mute_check_box"
+        <Button
+            android:id="@+id/start_codec_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:text="Mute" />
+            android:layout_marginStart="24dp"
+            android:enabled="false"
+            android:text="startCodec !!" />
 
-        <CheckBox
-            android:id="@+id/flip_horizontal_check_box"
+        <Button
+            android:id="@+id/start_play_movie"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:text="flip horizontal" />
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="24dp"
+            android:enabled="false"
+            android:text="play movie !!" />
 
-        <CheckBox
-            android:id="@+id/flip_vertical_check_box"
+    </RelativeLayout>
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:text="flip vertical" />
+            android:orientation="horizontal">
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/btn_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Filter : FILTER_GROUP" />
+
+            <CheckBox
+                android:id="@+id/mute_check_box"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="Mute" />
+
+            <CheckBox
+                android:id="@+id/flip_horizontal_check_box"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="flip horizontal" />
+
+            <CheckBox
+                android:id="@+id/flip_vertical_check_box"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="flip vertical" />
+
+        </LinearLayout>
+
+
+    </HorizontalScrollView>
 
 
     <ProgressBar
@@ -48,8 +76,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginEnd="24dp"
         android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
         android:progress="0" />
 
     <Button

@@ -5,7 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 
-import com.daasuu.mp4compose.utils.GlUtils;
+import com.daasuu.mp4compose.utils.EglUtil;
 
 /**
  * Created by sudamasayuki on 2018/03/12.
@@ -13,16 +13,11 @@ import com.daasuu.mp4compose.utils.GlUtils;
 
 public class GlLutFilter extends GlFilter {
 
-    private int hTex;
-    private final int NO_TEXTURE = -1;
-    private Bitmap lutTexture;
-
     private final static String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;" +
+            "precision mediump float;" +
                     "uniform mediump sampler2D lutTexture; \n" +
-                    "uniform samplerExternalOES sTexture; \n" +
-                    "varying vec2 vTextureCoord; \n" +
+                    "uniform lowp sampler2D sTexture; \n" +
+                    "varying highp vec2 vTextureCoord; \n" +
                     "vec4 sampleAs3DTexture(vec3 uv) {\n" +
                     "    float width = 16.;\n" +
                     "    float sliceSize = 1.0 / width;\n" +
@@ -48,27 +43,21 @@ public class GlLutFilter extends GlFilter {
                     "}";
 
     public GlLutFilter(Bitmap bitmap) {
-        super(GlUtils.DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
+        super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
         this.lutTexture = bitmap;
-        hTex = NO_TEXTURE;
+        hTex = EglUtil.NO_TEXTURE;
     }
 
 
     public GlLutFilter(Resources resources, int fxID) {
-        super(GlUtils.DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
+        super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
         this.lutTexture = BitmapFactory.decodeResource(resources, fxID);
-        hTex = NO_TEXTURE;
+        hTex = EglUtil.NO_TEXTURE;
     }
 
+    private int hTex;
 
-    @Override
-    public void setUpSurface() {
-        super.setUpSurface();
-        if (hTex == NO_TEXTURE) {
-            hTex = GlUtils.loadTexture(lutTexture, NO_TEXTURE, false);
-        }
-
-    }
+    private Bitmap lutTexture;
 
     @Override
     public void onDraw() {
@@ -76,6 +65,30 @@ public class GlLutFilter extends GlFilter {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE3);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, hTex);
         GLES20.glUniform1i(offsetDepthMapTextureUniform, 3);
+    }
+
+    @Override
+    public void setup() {
+        super.setup();
+        loadTexture();
+    }
+
+    private void loadTexture() {
+        if (hTex == EglUtil.NO_TEXTURE) {
+            hTex = EglUtil.loadTexture(lutTexture, EglUtil.NO_TEXTURE, false);
+        }
+    }
+
+    public void releaseLutBitmap() {
+        if (lutTexture != null && !lutTexture.isRecycled()) {
+            lutTexture.recycle();
+            lutTexture = null;
+        }
+    }
+
+    public void reset() {
+        hTex = EglUtil.NO_TEXTURE;
+        hTex = EglUtil.loadTexture(lutTexture, EglUtil.NO_TEXTURE, false);
     }
 
 

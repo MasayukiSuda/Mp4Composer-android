@@ -2,8 +2,6 @@ package com.daasuu.mp4compose.filter;
 
 import android.opengl.GLES20;
 
-import com.daasuu.mp4compose.utils.GlUtils;
-
 /**
  * Created by sudamasayuki on 2018/01/07.
  */
@@ -11,11 +9,10 @@ import com.daasuu.mp4compose.utils.GlUtils;
 public class GlVignetteFilter extends GlFilter {
 
     private static final String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;" +
+            "precision mediump float;" +
 
                     "varying vec2 vTextureCoord;" +
-                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform lowp sampler2D sTexture;" +
 
                     "uniform lowp vec2 vignetteCenter;" +
                     "uniform highp float vignetteStart;" +
@@ -34,7 +31,7 @@ public class GlVignetteFilter extends GlFilter {
     private float vignetteEnd = 0.85f;
 
     public GlVignetteFilter() {
-        super(GlUtils.DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
+        super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
     }
 
 
@@ -62,5 +59,6 @@ public class GlVignetteFilter extends GlFilter {
         GLES20.glUniform1f(getHandle("vignetteStart"), vignetteStart);
         GLES20.glUniform1f(getHandle("vignetteEnd"), vignetteEnd);
     }
+
 
 }

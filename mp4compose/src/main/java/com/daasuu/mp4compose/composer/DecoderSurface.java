@@ -5,16 +5,28 @@ import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
+import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
+import android.util.Size;
 import android.view.Surface;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
-import com.daasuu.mp4compose.Resolution;
 import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.filter.GlFilter;
-import com.daasuu.mp4compose.utils.GlUtils;
+import com.daasuu.mp4compose.gl.GlFramebufferObject;
+import com.daasuu.mp4compose.gl.GlPreviewFilter;
+import com.daasuu.mp4compose.gl.GlSurfaceTexture;
+import com.daasuu.mp4compose.utils.EglUtil;
+
+import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
+import static android.opengl.GLES20.GL_DEPTH_BUFFER_BIT;
+import static android.opengl.GLES20.GL_FRAMEBUFFER;
+import static android.opengl.GLES20.GL_LINEAR;
+import static android.opengl.GLES20.GL_MAX_TEXTURE_SIZE;
+import static android.opengl.GLES20.GL_NEAREST;
+import static android.opengl.GLES20.GL_TEXTURE_2D;
 
 // Refer : https://android.googlesource.com/platform/cts/+/lollipop-release/tests/tests/media/src/android/media/cts/OutputSurface.java
 
@@ -39,18 +51,30 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
     private EGLDisplay eglDisplay = EGL14.EGL_NO_DISPLAY;
     private EGLContext eglContext = EGL14.EGL_NO_CONTEXT;
     private EGLSurface eglSurface = EGL14.EGL_NO_SURFACE;
-    private SurfaceTexture surfaceTexture;
     private Surface surface;
     private Object frameSyncObject = new Object();     // guards frameAvailable
     private boolean frameAvailable;
     private GlFilter filter;
 
+    private int texName;
+
+    private GlSurfaceTexture previewTexture;
+
+    private GlFramebufferObject filterFramebufferObject;
+    private GlPreviewFilter previewShader;
+    private GlFilter normalShader;
+    private GlFramebufferObject framebufferObject;
+
     private float[] MVPMatrix = new float[16];
+    private float[] ProjMatrix = new float[16];
+    private float[] MMatrix = new float[16];
+    private float[] VMatrix = new float[16];
     private float[] STMatrix = new float[16];
 
+
     private Rotation rotation = Rotation.NORMAL;
-    private Resolution outputResolution;
-    private Resolution inputResolution;
+    private Size outputResolution;
+    private Size inputResolution;
     private FillMode fillMode = FillMode.PRESERVE_ASPECT_FIT;
     private FillModeCustomItem fillModeCustomItem;
     private boolean flipVertical = false;
@@ -62,7 +86,6 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
      */
     DecoderSurface(GlFilter filter) {
         this.filter = filter;
-        this.filter.setUpSurface();
         setup();
     }
 
@@ -76,8 +99,10 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
         // still need to keep a reference to it.  The Surface doesn't retain a reference
         // at the Java level, so if we don't either then the object can get GCed, which
         // causes the native finalizer to run.
-        if (VERBOSE) Log.d(TAG, "textureID=" + filter.getTextureId());
-        surfaceTexture = new SurfaceTexture(filter.getTextureId());
+
+        // if (VERBOSE) Log.d(TAG, "textureID=" + filter.getTextureId());
+        // surfaceTexture = new SurfaceTexture(filter.getTextureId());
+
         // This doesn't work if DecoderSurface is created on the thread that CTS started for
         // these test cases.
         //
@@ -89,10 +114,44 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
         //
         // Java language note: passing "this" out of a constructor is generally unwise,
         // but we should be able to get away with it here.
-        surfaceTexture.setOnFrameAvailableListener(this);
-        surface = new Surface(surfaceTexture);
 
-        Matrix.setIdentityM(STMatrix, 0);
+        filter.setup();
+        framebufferObject = new GlFramebufferObject();
+        normalShader = new GlFilter();
+        normalShader.setup();
+
+        final int[] args = new int[1];
+
+        GLES20.glGenTextures(args.length, args, 0);
+        texName = args[0];
+
+        // SurfaceTextureを生成
+        previewTexture = new GlSurfaceTexture(texName);
+        previewTexture.setOnFrameAvailableListener(this);
+        surface = new Surface(previewTexture.getSurfaceTexture());
+
+        GLES20.glBindTexture(previewTexture.getTextureTarget(), texName);
+        // GL_TEXTURE_EXTERNAL_OES
+        //OpenGlUtils.setupSampler(previewTexture.getTextureTarget(), GL_LINEAR, GL_NEAREST);
+        EglUtil.setupSampler(previewTexture.getTextureTarget(), GL_LINEAR, GL_NEAREST);
+
+        GLES20.glBindTexture(GL_TEXTURE_2D, 0);
+
+        // GL_TEXTURE_EXTERNAL_OES
+        previewShader = new GlPreviewFilter(previewTexture.getTextureTarget());
+        previewShader.setup();
+        filterFramebufferObject = new GlFramebufferObject();
+
+
+        Matrix.setLookAtM(VMatrix, 0,
+                0.0f, 0.0f, 5.0f,
+                0.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, 0.0f
+        );
+
+        GLES20.glGetIntegerv(GL_MAX_TEXTURE_SIZE, args, 0);
+
+
     }
 
 
@@ -107,6 +166,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
             EGL14.eglTerminate(eglDisplay);
         }
         surface.release();
+        previewTexture.release();
         // this causes a bunch of warnings that appear harmless but might confuse someone:
         //  W BufferQueue: [unnamed-3997-2] cancelBuffer: BufferQueue has been abandoned!
         //surfaceTexture.release();
@@ -116,7 +176,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
         filter.release();
         filter = null;
         surface = null;
-        surfaceTexture = null;
+        previewTexture = null;
     }
 
     /**
@@ -151,8 +211,9 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
             frameAvailable = false;
         }
         // Latch the data.
-        GlUtils.checkGlError("before updateTexImage");
-        surfaceTexture.updateTexImage();
+        //  EglUtil.checkGlError("before updateTexImage");
+        previewTexture.updateTexImage();
+        previewTexture.getTransformMatrix(STMatrix);
     }
 
 
@@ -161,23 +222,38 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
      */
     void drawImage() {
 
-        Matrix.setIdentityM(MVPMatrix, 0);
+        framebufferObject.enable();
+        GLES20.glViewport(0, 0, framebufferObject.getWidth(), framebufferObject.getHeight());
+
+
+        if (filter != null) {
+            filterFramebufferObject.enable();
+            GLES20.glViewport(0, 0, filterFramebufferObject.getWidth(), filterFramebufferObject.getHeight());
+            GLES20.glClearColor(filter.clearColor[0], filter.clearColor[1], filter.clearColor[2], filter.clearColor[3]);
+        }
+
+        GLES20.glClear(GL_COLOR_BUFFER_BIT);
+
+        Matrix.multiplyMM(MVPMatrix, 0, VMatrix, 0, MMatrix, 0);
+        Matrix.multiplyMM(MVPMatrix, 0, ProjMatrix, 0, MVPMatrix, 0);
 
         float scaleDirectionX = flipHorizontal ? -1 : 1;
         float scaleDirectionY = flipVertical ? -1 : 1;
 
-
         float scale[];
         switch (fillMode) {
             case PRESERVE_ASPECT_FIT:
-                scale = FillMode.getScaleAspectFit(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
+                scale = FillMode.getScaleAspectFit(rotation.getRotation(), inputResolution.getWidth(), inputResolution.getHeight(), outputResolution.getWidth(), outputResolution.getHeight());
+
+                // Log.d(TAG, "scale[0] = " + scale[0] + " scale[1] = " + scale[1]);
+
                 Matrix.scaleM(MVPMatrix, 0, scale[0] * scaleDirectionX, scale[1] * scaleDirectionY, 1);
                 if (rotation != Rotation.NORMAL) {
                     Matrix.rotateM(MVPMatrix, 0, -rotation.getRotation(), 0.f, 0.f, 1.f);
                 }
                 break;
             case PRESERVE_ASPECT_CROP:
-                scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
+                scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.getWidth(), inputResolution.getHeight(), outputResolution.getWidth(), outputResolution.getHeight());
                 Matrix.scaleM(MVPMatrix, 0, scale[0] * scaleDirectionX, scale[1] * scaleDirectionY, 1);
                 if (rotation != Rotation.NORMAL) {
                     Matrix.rotateM(MVPMatrix, 0, -rotation.getRotation(), 0.f, 0.f, 1.f);
@@ -186,7 +262,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
             case CUSTOM:
                 if (fillModeCustomItem != null) {
                     Matrix.translateM(MVPMatrix, 0, fillModeCustomItem.getTranslateX(), -fillModeCustomItem.getTranslateY(), 0f);
-                    scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.width(), inputResolution.height(), outputResolution.width(), outputResolution.height());
+                    scale = FillMode.getScaleAspectCrop(rotation.getRotation(), inputResolution.getWidth(), inputResolution.getHeight(), outputResolution.getWidth(), outputResolution.getHeight());
 
                     if (fillModeCustomItem.getRotate() == 0 || fillModeCustomItem.getRotate() == 180) {
                         Matrix.scaleM(MVPMatrix,
@@ -204,8 +280,8 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
 
                     Matrix.rotateM(MVPMatrix, 0, -(rotation.getRotation() + fillModeCustomItem.getRotate()), 0.f, 0.f, 1.f);
 
-//                    Log.d(TAG, "inputResolution = " + inputResolution.width() + " height = " + inputResolution.height());
-//                    Log.d(TAG, "out = " + outputResolution.width() + " height = " + outputResolution.height());
+//                    Log.d(TAG, "inputResolution = " + inputResolution.getWidth() + " height = " + inputResolution.getHeight());
+//                    Log.d(TAG, "out = " + outputResolution.getWidth() + " height = " + outputResolution.getHeight());
 //                    Log.d(TAG, "rotation = " + rotation.getRotation());
 //                    Log.d(TAG, "scale[0] = " + scale[0] + " scale[1] = " + scale[1]);
 
@@ -216,7 +292,23 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
         }
 
 
-        filter.draw(surfaceTexture, STMatrix, MVPMatrix);
+        previewShader.draw(texName, MVPMatrix, STMatrix, 1f);
+
+        if (filter != null) {
+            // 一度shaderに描画したものを、fboを利用して、drawする。drawには必要なさげだけど。
+            framebufferObject.enable();
+            GLES20.glClear(GL_COLOR_BUFFER_BIT);
+            filter.draw(filterFramebufferObject.getTexName(), framebufferObject);
+        }
+
+
+        ////////////////////////////////////////////////////////////////////////////////////
+
+        GLES20.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        GLES20.glViewport(0, 0, framebufferObject.getWidth(), framebufferObject.getHeight());
+
+        GLES20.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        normalShader.draw(framebufferObject.getTexName(), null);
     }
 
     @Override
@@ -236,7 +328,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
     }
 
 
-    void setOutputResolution(Resolution resolution) {
+    void setOutputResolution(Size resolution) {
         this.outputResolution = resolution;
     }
 
@@ -244,7 +336,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
         this.fillMode = fillMode;
     }
 
-    void setInputResolution(Resolution resolution) {
+    void setInputResolution(Size resolution) {
         this.inputResolution = resolution;
     }
 
@@ -252,11 +344,29 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
         this.fillModeCustomItem = fillModeCustomItem;
     }
 
-    public void setFlipVertical(boolean flipVertical) {
+    void setFlipVertical(boolean flipVertical) {
         this.flipVertical = flipVertical;
     }
 
-    public void setFlipHorizontal(boolean flipHorizontal) {
+    void setFlipHorizontal(boolean flipHorizontal) {
         this.flipHorizontal = flipHorizontal;
+    }
+
+    void completeParams() {
+        int width = outputResolution.getWidth();
+        int height = outputResolution.getHeight();
+        framebufferObject.setup(width, height);
+        normalShader.setFrameSize(width, height);
+
+        filterFramebufferObject.setup(width, height);
+        previewShader.setFrameSize(width, height);
+        // MCLog.d("onSurfaceChanged width = " + width + " height = " + height + " aspectRatio = " + scaleRatio);
+        Matrix.frustumM(ProjMatrix, 0, -1f, 1f, -1, 1, 5, 7);
+        Matrix.setIdentityM(MMatrix, 0);
+
+        if (filter != null) {
+            filter.setFrameSize(width, height);
+        }
+
     }
 }

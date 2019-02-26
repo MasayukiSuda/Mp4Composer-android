@@ -1,6 +1,7 @@
 package com.daasuu.sample;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -23,7 +25,10 @@ import android.widget.Toast;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.composer.Mp4Composer;
-import com.daasuu.mp4compose.filter.GlLutFilter;
+import com.daasuu.mp4compose.filter.GlFilter;
+import com.daasuu.mp4compose.filter.GlFilterGroup;
+import com.daasuu.mp4compose.filter.GlMonochromeFilter;
+import com.daasuu.mp4compose.filter.GlVignetteFilter;
 import com.daasuu.sample.video.VideoItem;
 import com.daasuu.sample.video.VideoListAdapter;
 import com.daasuu.sample.video.VideoLoadListener;
@@ -51,6 +56,10 @@ public class MainActivity extends AppCompatActivity {
     private CheckBox flipVerticalCheckBox;
     private CheckBox flipHorizontalCheckBox;
 
+    private String videoPath;
+    private AlertDialog filterDialog;
+    private GlFilter glFilter = new GlFilterGroup(new GlMonochromeFilter(), new GlVignetteFilter());
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,7 +81,44 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.start_play_movie).setOnClickListener(v -> {
+            Uri uri = Uri.parse(videoPath);
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            intent.setDataAndType(uri, "video/mp4");
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btn_filter).setOnClickListener(v -> {
+            if (filterDialog == null) {
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                builder.setTitle("Choose a filter");
+                builder.setOnDismissListener(dialog -> {
+                    filterDialog = null;
+                });
+
+                final FilterType[] filters = FilterType.values();
+                CharSequence[] charList = new CharSequence[filters.length];
+                for (int i = 0, n = filters.length; i < n; i++) {
+                    charList[i] = filters[i].name();
+                }
+                builder.setItems(charList, (dialog, item) -> {
+                    changeFilter(filters[item]);
+                });
+                filterDialog = builder.show();
+            } else {
+                filterDialog.dismiss();
+            }
+        });
+
         bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.lookup_sample);
+    }
+
+    private void changeFilter(FilterType filter) {
+        glFilter = null;
+        glFilter = FilterType.createGlFilter(filter, this);
+        Button button = findViewById(R.id.btn_filter);
+        button.setText("Filter : " + filter.name());
     }
 
     @Override
@@ -107,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startCodec() {
-        final String videoPath = getVideoFilePath();
+        videoPath = getVideoFilePath();
 
         final ProgressBar progressBar = findViewById(R.id.progress_bar);
         progressBar.setMax(100);
@@ -118,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
                 // .rotation(Rotation.ROTATION_270)
                 //.size(720, 1280)
                 .fillMode(FillMode.PRESERVE_ASPECT_FIT)
-                .filter(new GlLutFilter(bitmap))
+                .filter(glFilter)
                 .mute(muteCheckBox.isChecked())
                 .flipHorizontal(flipHorizontalCheckBox.isChecked())
                 .flipVertical(flipVerticalCheckBox.isChecked())
@@ -136,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
                         runOnUiThread(() -> {
                             progressBar.setProgress(100);
                             findViewById(R.id.start_codec_button).setEnabled(true);
+                            findViewById(R.id.start_play_movie).setEnabled(true);
                             Toast.makeText(MainActivity.this, "codec complete path =" + videoPath, Toast.LENGTH_SHORT).show();
                         });
                     }

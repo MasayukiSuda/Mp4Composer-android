@@ -2,8 +2,6 @@ package com.daasuu.mp4compose.filter;
 
 import android.opengl.GLES20;
 
-import com.daasuu.mp4compose.utils.GlUtils;
-
 /**
  * Created by sudamasayuki on 2018/01/06.
  */
@@ -11,11 +9,10 @@ import com.daasuu.mp4compose.utils.GlUtils;
 public class GlBulgeDistortionFilter extends GlFilter {
 
     private static final String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;" +
+            "precision mediump float;" +
 
                     "varying highp vec2 vTextureCoord;" +
-                    "uniform samplerExternalOES sTexture;" +
+                    "uniform lowp sampler2D sTexture;" +
 
                     "uniform highp vec2 center;" +
                     "uniform highp float radius;" +
@@ -41,7 +38,7 @@ public class GlBulgeDistortionFilter extends GlFilter {
     private float scale = 0.5f;
 
     public GlBulgeDistortionFilter() {
-        super(GlUtils.DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
+        super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
     }
 
     public float getCenterX() {

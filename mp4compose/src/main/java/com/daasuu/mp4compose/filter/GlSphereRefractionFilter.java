@@ -2,8 +2,6 @@ package com.daasuu.mp4compose.filter;
 
 import android.opengl.GLES20;
 
-import com.daasuu.mp4compose.utils.GlUtils;
-
 /**
  * Created by sudamasayuki on 2018/01/07.
  */
@@ -11,11 +9,10 @@ import com.daasuu.mp4compose.utils.GlUtils;
 public class GlSphereRefractionFilter extends GlFilter {
 
     private static final String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;" +
+            "precision mediump float;" +
 
                     "varying vec2 vTextureCoord;" +
-                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform lowp sampler2D sTexture;" +
                     "uniform highp vec2 center;" +
                     "uniform highp float radius;" +
                     "uniform highp float aspectRatio;" +
@@ -43,7 +40,7 @@ public class GlSphereRefractionFilter extends GlFilter {
     private float refractiveIndex = 0.71f;
 
     public GlSphereRefractionFilter() {
-        super(GlUtils.DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
+        super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
     }
 
     public void setCenterX(float centerX) {

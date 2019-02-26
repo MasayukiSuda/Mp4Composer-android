@@ -9,12 +9,8 @@ import android.opengl.GLES20;
 public class GlBoxBlurFilter extends GlFilter {
 
     private static final String VERTEX_SHADER =
-            "uniform mat4 uMVPMatrix;\n" +
-                    "uniform mat4 uSTMatrix;\n" +
-                    "attribute vec4 aPosition;\n" +
-                    "attribute vec4 aTextureCoord;\n" +
-
-                    "highp vec2 vTextureCoord;\n" +
+            "attribute vec4 aPosition;" +
+                    "attribute vec4 aTextureCoord;" +
 
                     "uniform highp float texelWidthOffset;" +
                     "uniform highp float texelHeightOffset;" +
@@ -27,14 +23,12 @@ public class GlBoxBlurFilter extends GlFilter {
                     "varying highp vec2 twoStepsRightTextureCoordinate;" +
 
                     "void main() {" +
-
-                    "  gl_Position = uMVPMatrix * aPosition;\n" +
-                    "  vTextureCoord = (uSTMatrix * aTextureCoord).xy;\n" +
+                    "gl_Position = aPosition;" +
 
                     "vec2 firstOffset = vec2(1.5 * texelWidthOffset, 1.5 * texelHeightOffset) * blurSize;" +
                     "vec2 secondOffset = vec2(3.5 * texelWidthOffset, 3.5 * texelHeightOffset) * blurSize;" +
 
-                    "centerTextureCoordinate = vTextureCoord.xy;" +
+                    "centerTextureCoordinate = aTextureCoord.xy;" +
                     "oneStepLeftTextureCoordinate = centerTextureCoordinate - firstOffset;" +
                     "twoStepsLeftTextureCoordinate = centerTextureCoordinate - secondOffset;" +
                     "oneStepRightTextureCoordinate = centerTextureCoordinate + firstOffset;" +
@@ -42,10 +36,9 @@ public class GlBoxBlurFilter extends GlFilter {
                     "}";
 
     private static final String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;" +
+            "precision mediump float;" +
 
-                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform lowp sampler2D sTexture;" +
 
                     "varying highp vec2 centerTextureCoordinate;" +
                     "varying highp vec2 oneStepLeftTextureCoordinate;" +
@@ -102,6 +95,5 @@ public class GlBoxBlurFilter extends GlFilter {
         GLES20.glUniform1f(getHandle("texelHeightOffset"), texelHeightOffset);
         GLES20.glUniform1f(getHandle("blurSize"), blurSize);
     }
-
 }
 

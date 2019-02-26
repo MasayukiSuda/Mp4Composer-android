@@ -2,21 +2,15 @@ package com.daasuu.mp4compose.filter;
 
 import android.opengl.GLES20;
 
-import com.daasuu.mp4compose.Resolution;
-
 /**
  * Created by sudamasayuki on 2018/01/07.
  */
 
-public class GlSharpenFilter extends GlFilter implements IResolutionFilter {
+public class GlSharpenFilter extends GlFilter {
 
     private static final String VERTEX_SHADER =
-            "uniform mat4 uMVPMatrix;\n" +
-                    "uniform mat4 uSTMatrix;\n" +
-                    "attribute vec4 aPosition;\n" +
-                    "attribute vec4 aTextureCoord;\n" +
-
-                    "highp vec2 vTextureCoord;\n" +
+            "attribute vec4 aPosition;" +
+                    "attribute vec4 aTextureCoord;" +
 
                     "uniform float imageWidthFactor;" +
                     "uniform float imageHeightFactor;" +
@@ -32,13 +26,12 @@ public class GlSharpenFilter extends GlFilter implements IResolutionFilter {
                     "varying float edgeMultiplier;" +
 
                     "void main() {" +
-                    "  gl_Position = uMVPMatrix * aPosition;\n" +
-                    "  vTextureCoord = (uSTMatrix * aTextureCoord).xy;\n" +
+                    "gl_Position = aPosition;" +
 
                     "mediump vec2 widthStep = vec2(imageWidthFactor, 0.0);" +
                     "mediump vec2 heightStep = vec2(0.0, imageHeightFactor);" +
 
-                    "textureCoordinate       = vTextureCoord.xy;" +
+                    "textureCoordinate       = aTextureCoord.xy;" +
                     "leftTextureCoordinate   = textureCoordinate - widthStep;" +
                     "rightTextureCoordinate  = textureCoordinate + widthStep;" +
                     "topTextureCoordinate    = textureCoordinate + heightStep;" +
@@ -49,10 +42,9 @@ public class GlSharpenFilter extends GlFilter implements IResolutionFilter {
                     "}";
 
     private static final String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision highp float;" +
+            "precision highp float;" +
 
-                    "uniform samplerExternalOES sTexture;\n" +
+                    "uniform lowp sampler2D sTexture;" +
 
                     "varying highp vec2 textureCoordinate;" +
                     "varying highp vec2 leftTextureCoordinate;" +
@@ -89,12 +81,12 @@ public class GlSharpenFilter extends GlFilter implements IResolutionFilter {
         this.sharpness = sharpness;
     }
 
-    @Override
-    public void setResolution(Resolution resolution) {
-        imageWidthFactor = 1f / resolution.width();
-        imageHeightFactor = 1f / resolution.height();
-    }
 
+    @Override
+    public void setFrameSize(final int width, final int height) {
+        imageWidthFactor = 1f / width;
+        imageHeightFactor = 1f / height;
+    }
 
     @Override
     public void onDraw() {
@@ -102,6 +94,5 @@ public class GlSharpenFilter extends GlFilter implements IResolutionFilter {
         GLES20.glUniform1f(getHandle("imageHeightFactor"), imageHeightFactor);
         GLES20.glUniform1f(getHandle("sharpness"), sharpness);
     }
-
 }
 
