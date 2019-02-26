@@ -31,7 +31,7 @@ allprojects {
 Step 2. Add the dependency
 ```groovy
 dependencies {
-        implementation 'com.github.MasayukiSuda:Mp4Composer-android:v0.1.9'
+        implementation 'com.github.MasayukiSuda:Mp4Composer-android:v0.2.0'
 }
 ```
 
@@ -41,7 +41,7 @@ dependencies {
             .rotation(Rotation.ROTATION_90)
             .size((width) 540, (height) 960)
             .fillMode(FillMode.PRESERVE_ASPECT_FIT)
-            .filter(new GlSepiaFilter())
+            .filter(new GlFilterGroup(new GlMonochromeFilter(), new GlVignetteFilter()))
             .listener(new Mp4Composer.Listener() {
                 @Override
                 public void onProgress(double progress) {
