@@ -4,11 +4,11 @@ package com.daasuu.mp4compose.composer;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.util.Size;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
+import com.daasuu.mp4compose.compat.SizeCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
 
 import java.io.IOException;
@@ -54,8 +54,8 @@ class VideoComposer {
 
     void setUp(GlFilter filter,
                Rotation rotation,
-               Size outputResolution,
-               Size inputResolution,
+               SizeCompat outputResolution,
+               SizeCompat inputResolution,
                FillMode fillMode,
                FillModeCustomItem fillModeCustomItem,
                final boolean flipVertical,
@@ -168,9 +168,9 @@ class VideoComposer {
             decoder.queueInputBuffer(result, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
             return DRAIN_STATE_NONE;
         }
-        int sampleSize = mediaExtractor.readSampleData(decoderInputBuffers[result], 0);
+        int sampleSizeCompat = mediaExtractor.readSampleData(decoderInputBuffers[result], 0);
         boolean isKeyFrame = (mediaExtractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0;
-        decoder.queueInputBuffer(result, 0, sampleSize, mediaExtractor.getSampleTime() / timeScale, isKeyFrame ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0);
+        decoder.queueInputBuffer(result, 0, sampleSizeCompat, mediaExtractor.getSampleTime() / timeScale, isKeyFrame ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0);
         mediaExtractor.advance();
         return DRAIN_STATE_CONSUMED;
     }

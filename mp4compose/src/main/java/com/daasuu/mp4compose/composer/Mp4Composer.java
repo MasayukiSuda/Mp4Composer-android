@@ -2,11 +2,11 @@ package com.daasuu.mp4compose.composer;
 
 import android.media.MediaMetadataRetriever;
 import android.util.Log;
-import android.util.Size;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
+import com.daasuu.mp4compose.compat.SizeCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
 
 import java.io.File;
@@ -27,7 +27,7 @@ public class Mp4Composer {
     private final String srcPath;
     private final String destPath;
     private GlFilter filter;
-    private Size outputResolution;
+    private SizeCompat outputResolution;
     private int bitrate = -1;
     private boolean mute = false;
     private Rotation rotation = Rotation.NORMAL;
@@ -52,7 +52,7 @@ public class Mp4Composer {
     }
 
     public Mp4Composer size(int width, int height) {
-        this.outputResolution = new Size(width, height);
+        this.outputResolution = new SizeCompat(width, height);
         return this;
     }
 
@@ -149,7 +149,7 @@ public class Mp4Composer {
                 }
 
                 final int videoRotate = getVideoRotation(srcPath);
-                final Size srcVideoResolution = getVideoResolution(srcPath, videoRotate);
+                final SizeCompat srcVideoResolution = getVideoResolution(srcPath, videoRotate);
 
                 if (filter == null) {
                     filter = new GlFilter();
@@ -169,7 +169,7 @@ public class Mp4Composer {
                     } else {
                         Rotation rotate = Rotation.fromInt(rotation.getRotation() + videoRotate);
                         if (rotate == Rotation.ROTATION_90 || rotate == Rotation.ROTATION_270) {
-                            outputResolution = new Size(srcVideoResolution.getHeight(), srcVideoResolution.getWidth());
+                            outputResolution = new SizeCompat(srcVideoResolution.getHeight(), srcVideoResolution.getWidth());
                         } else {
                             outputResolution = srcVideoResolution;
                         }
@@ -286,7 +286,7 @@ public class Mp4Composer {
         return bitrate;
     }
 
-    private Size getVideoResolution(final String path, final int rotation) {
+    private SizeCompat getVideoResolution(final String path, final int rotation) {
         MediaMetadataRetriever retriever = null;
         try {
             retriever = new MediaMetadataRetriever();
@@ -294,7 +294,7 @@ public class Mp4Composer {
             int width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
             int height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
 
-            return new Size(width, height);
+            return new SizeCompat(width, height);
         } finally {
             try {
                 if (retriever != null) {

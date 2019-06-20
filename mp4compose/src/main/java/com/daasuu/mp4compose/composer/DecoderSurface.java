@@ -8,12 +8,12 @@ import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
-import android.util.Size;
 import android.view.Surface;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
+import com.daasuu.mp4compose.compat.SizeCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.gl.GlFramebufferObject;
 import com.daasuu.mp4compose.gl.GlPreviewFilter;
@@ -73,8 +73,8 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
 
 
     private Rotation rotation = Rotation.NORMAL;
-    private Size outputResolution;
-    private Size inputResolution;
+    private SizeCompat outputResolution;
+    private SizeCompat inputResolution;
     private FillMode fillMode = FillMode.PRESERVE_ASPECT_FIT;
     private FillModeCustomItem fillModeCustomItem;
     private boolean flipVertical = false;
@@ -328,7 +328,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
     }
 
 
-    void setOutputResolution(Size resolution) {
+    void setOutputResolution(SizeCompat resolution) {
         this.outputResolution = resolution;
     }
 
@@ -336,7 +336,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
         this.fillMode = fillMode;
     }
 
-    void setInputResolution(Size resolution) {
+    void setInputResolution(SizeCompat resolution) {
         this.inputResolution = resolution;
     }
 

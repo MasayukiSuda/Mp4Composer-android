@@ -6,11 +6,11 @@ import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
 import android.util.Log;
-import android.util.Size;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
+import com.daasuu.mp4compose.compat.SizeCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
 
 import java.io.FileDescriptor;
@@ -47,12 +47,12 @@ class Mp4ComposerEngine {
 
     void compose(
             final String destPath,
-            final Size outputResolution,
+            final SizeCompat outputResolution,
             final GlFilter filter,
             final int bitrate,
             final boolean mute,
             final Rotation rotation,
-            final Size inputResolution,
+            final SizeCompat inputResolution,
             final FillMode fillMode,
             final FillModeCustomItem fillModeCustomItem,
             final int timeScale,
