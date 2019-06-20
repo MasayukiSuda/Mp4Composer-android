@@ -87,9 +87,6 @@ public class VideoLoader {
                 do {
                     String path = cursor.getString(cursor.getColumnIndex(projection[0]));
                     if (path == null) continue;
-                    if (!path.endsWith(".mp4") && !path.endsWith(".MOV") && !path.endsWith(".mov")) {
-                        continue;
-                    }
                     Log.d(TAG, "pick video from device path = " + path);
 
                     String duration = cursor.getString(cursor.getColumnIndex(projection[1]));
