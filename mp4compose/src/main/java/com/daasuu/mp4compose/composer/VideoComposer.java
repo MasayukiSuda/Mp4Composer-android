@@ -13,6 +13,7 @@ import com.daasuu.mp4compose.filter.GlFilter;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 // Refer: https://android.googlesource.com/platform/cts/+/lollipop-release/tests/tests/media/src/android/media/cts/ExtractDecodeEditEncodeMuxTest.java
 // Refer: https://github.com/ypresto/android-transcoder/blob/master/lib/src/main/java/net/ypresto/androidtranscoder/engine/VideoTrackTranscoder.java
@@ -41,14 +42,19 @@ class VideoComposer {
     private boolean encoderStarted;
     private long writtenPresentationTimeUs;
     private final int timeScale;
+    private final long trimStartUs;
+    private final long trimEndUs;
 
     VideoComposer(MediaExtractor mediaExtractor, int trackIndex,
-                  MediaFormat outputFormat, MuxRender muxRender, int timeScale) {
+                  MediaFormat outputFormat, MuxRender muxRender, int timeScale,
+                  final long trimStartMs, final long trimEndMs) {
         this.mediaExtractor = mediaExtractor;
         this.trackIndex = trackIndex;
         this.outputFormat = outputFormat;
         this.muxRender = muxRender;
         this.timeScale = timeScale;
+        this.trimStartUs = TimeUnit.MILLISECONDS.toMicros(trimStartMs);
+        this.trimEndUs = trimEndMs == -1 ? trimEndMs : TimeUnit.MILLISECONDS.toMicros(trimEndMs);
     }
 
 
@@ -74,6 +80,7 @@ class VideoComposer {
         encoderOutputBuffers = encoder.getOutputBuffers();
 
         MediaFormat inputFormat = mediaExtractor.getTrackFormat(trackIndex);
+        mediaExtractor.seekTo(trimStartUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
         if (inputFormat.containsKey("rotation-degrees")) {
             // Decoded video is rotated automatically in Android 5.0 lollipop.
             // Turn off here because we don't want to encode rotated one.
@@ -190,7 +197,9 @@ class VideoComposer {
             isDecoderEOS = true;
             bufferInfo.size = 0;
         }
-        boolean doRender = (bufferInfo.size > 0);
+        final boolean doRender = (bufferInfo.size > 0
+                && bufferInfo.presentationTimeUs >= trimStartUs
+                && (bufferInfo.presentationTimeUs <= trimEndUs || trimEndUs == -1));
         // NOTE: doRender will block if buffer (of encoder) is full.
         // Refer: http://bigflake.com/mediacodec/CameraToMpegTest.java.txt
         decoder.releaseOutputBuffer(result, doRender);

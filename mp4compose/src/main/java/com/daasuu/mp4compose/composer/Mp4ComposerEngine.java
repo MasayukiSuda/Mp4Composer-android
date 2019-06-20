@@ -57,7 +57,9 @@ class Mp4ComposerEngine {
             final FillModeCustomItem fillModeCustomItem,
             final int timeScale,
             final boolean flipVertical,
-            final boolean flipHorizontal
+            final boolean flipHorizontal,
+            final long trimStartMs,
+            final long trimEndMs
     ) throws IOException {
 
 
@@ -100,7 +102,7 @@ class Mp4ComposerEngine {
             }
 
             // setup video composer
-            videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, videoOutputFormat, muxRender, timeScale);
+            videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, videoOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs);
             videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem, flipVertical, flipHorizontal);
             mediaExtractor.selectTrack(videoTrackIndex);
 
@@ -109,9 +111,9 @@ class Mp4ComposerEngine {
                 // has Audio video
 
                 if (timeScale < 2) {
-                    audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender);
+                    audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender, trimStartMs, trimEndMs);
                 } else {
-                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, mediaExtractor.getTrackFormat(audioTrackIndex), muxRender, timeScale);
+                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, mediaExtractor.getTrackFormat(audioTrackIndex), muxRender, timeScale, trimStartMs, trimEndMs);
                 }
 
                 audioComposer.setup();

@@ -7,6 +7,7 @@ import android.media.MediaFormat;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.TimeUnit;
 
 
 // Refer: https://github.com/ypresto/android-transcoder/blob/master/lib/src/main/java/net/ypresto/androidtranscoder/engine/PassThroughTrackTranscoder.java
@@ -22,11 +23,16 @@ class AudioComposer implements IAudioComposer {
     private MediaFormat actualOutputFormat;
     private long writtenPresentationTimeUs;
 
+    private final long trimStartUs;
+    private final long trimEndUs;
+
     AudioComposer(MediaExtractor mediaExtractor, int trackIndex,
-                  MuxRender muxRender) {
+                  MuxRender muxRender, long trimStartMs, long trimEndMs) {
         this.mediaExtractor = mediaExtractor;
         this.trackIndex = trackIndex;
         this.muxRender = muxRender;
+        this.trimStartUs = TimeUnit.MILLISECONDS.toMicros(trimStartMs);
+        this.trimEndUs = trimEndMs == -1 ? trimEndMs : TimeUnit.MILLISECONDS.toMicros(trimEndMs);
 
         actualOutputFormat = this.mediaExtractor.getTrackFormat(this.trackIndex);
         this.muxRender.setOutputFormat(this.sampleType, actualOutputFormat);
@@ -53,10 +59,12 @@ class AudioComposer implements IAudioComposer {
         assert sampleSize <= bufferSize;
         boolean isKeyFrame = (mediaExtractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0;
         int flags = isKeyFrame ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0;
-        bufferInfo.set(0, sampleSize, mediaExtractor.getSampleTime(), flags);
-        muxRender.writeSampleData(sampleType, buffer, bufferInfo);
-        writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
 
+        if (mediaExtractor.getSampleTime() >= trimStartUs && (mediaExtractor.getSampleTime() <= trimEndUs || trimEndUs == -1)) {
+            bufferInfo.set(0, sampleSize, mediaExtractor.getSampleTime(), flags);
+            muxRender.writeSampleData(sampleType, buffer, bufferInfo);
+        }
+        writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
         mediaExtractor.advance();
         return true;
     }

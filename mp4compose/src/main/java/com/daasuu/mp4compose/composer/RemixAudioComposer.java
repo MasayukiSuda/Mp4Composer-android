@@ -5,6 +5,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 // Refer:  https://github.com/ypresto/android-transcoder/blob/master/lib/src/main/java/net/ypresto/androidtranscoder/engine/AudioTrackTranscoder.java
 
@@ -45,13 +46,24 @@ class RemixAudioComposer implements IAudioComposer {
     private AudioChannel audioChannel;
     private final int timeScale;
 
+    private final long trimStartUs;
+    private final long trimEndUs;
+
+    // Used for AAC priming offset.
+    private boolean addPrimingDelay;
+    private int frameCounter;
+    private long primingDelay;
+
     public RemixAudioComposer(MediaExtractor extractor, int trackIndex,
-                              MediaFormat outputFormat, MuxRender muxer, int timeScale) {
+                              MediaFormat outputFormat, MuxRender muxer, int timeScale,
+                              long trimStartMs, long trimEndMs) {
         this.extractor = extractor;
         this.trackIndex = trackIndex;
         this.outputFormat = outputFormat;
         this.muxer = muxer;
         this.timeScale = timeScale;
+        this.trimStartUs = TimeUnit.MILLISECONDS.toMicros(trimStartMs);
+        this.trimEndUs = trimEndMs == -1 ? trimEndMs : TimeUnit.MILLISECONDS.toMicros(trimEndMs);
     }
 
     @Override
@@ -156,6 +168,8 @@ class RemixAudioComposer implements IAudioComposer {
                     throw new RuntimeException("Audio output format changed twice.");
                 }
                 actualOutputFormat = encoder.getOutputFormat();
+                // MediaFormat.MIMETYPE_AUDIO_AAC
+                addPrimingDelay = "audio/mp4a-latm".equals(actualOutputFormat.getString(MediaFormat.KEY_MIME));
                 muxer.setOutputFormat(SAMPLE_TYPE, actualOutputFormat);
                 return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
             case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
@@ -177,16 +191,27 @@ class RemixAudioComposer implements IAudioComposer {
             return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
 
-        if (muxCount == 1) {
-            muxer.writeSampleData(SAMPLE_TYPE, encoderBuffers.getOutputBuffer(result), bufferInfo);
-        }
-        if (muxCount < timeScale) {
-            muxCount++;
-        } else {
-            muxCount = 1;
+        writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
+
+        if (frameCounter < 3 && addPrimingDelay) {
+            // For AAC, a priming delay of 2112 samples, ~2 frames should be added.
+            // The audio should be offset by two frames, and the third frame should be at time zero.
+            frameCounter++;
+            primingDelay = bufferInfo.presentationTimeUs;
         }
 
-        writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
+        if (muxCount == 1
+                && bufferInfo.presentationTimeUs >= trimStartUs
+                && (bufferInfo.presentationTimeUs <= trimEndUs || trimEndUs == -1)) {
+            if (frameCounter == 3 || !addPrimingDelay) {
+                // For AAC, drop the first two frames.
+                if (!isEncoderEOS) {
+                    bufferInfo.presentationTimeUs = bufferInfo.presentationTimeUs - primingDelay;
+                }
+                muxer.writeSampleData(SAMPLE_TYPE, encoderBuffers.getOutputBuffer(result), bufferInfo);
+            }
+        }
+
         encoder.releaseOutputBuffer(result, false);
         return DRAIN_STATE_CONSUMED;
     }

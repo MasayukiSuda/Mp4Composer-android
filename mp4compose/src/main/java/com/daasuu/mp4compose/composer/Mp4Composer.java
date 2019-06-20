@@ -37,6 +37,8 @@ public class Mp4Composer {
     private int timeScale = 1;
     private boolean flipVertical = false;
     private boolean flipHorizontal = false;
+    private long trimStartMs = 0;
+    private long trimEndMs = -1;
 
     private ExecutorService executorService;
 
@@ -100,6 +102,19 @@ public class Mp4Composer {
 
     public Mp4Composer timeScale(final int timeScale) {
         this.timeScale = timeScale;
+        return this;
+    }
+
+    /**
+     * Trim the video to the provided times. By default the video will not be trimmed.
+     *
+     * @param trimStartMs The start time of the trim in milliseconds.
+     * @param trimEndMs   The end time of the trim in milliseconds, -1 for no end.
+     * @return The composer instance.
+     */
+    public Mp4Composer trim(final long trimStartMs, final long trimEndMs) {
+        this.trimStartMs = trimStartMs;
+        this.trimEndMs = trimEndMs;
         return this;
     }
 
@@ -204,7 +219,9 @@ public class Mp4Composer {
                             fillModeCustomItem,
                             timeScale,
                             flipVertical,
-                            flipHorizontal
+                            flipHorizontal,
+                            trimStartMs,
+                            trimEndMs
                     );
 
                 } catch (Exception e) {
