@@ -77,14 +77,6 @@ class Mp4ComposerEngine {
             }
             Log.d(TAG, "Duration (us): " + durationUs);
 
-            MediaFormat videoOutputFormat = MediaFormat.createVideoFormat("video/avc", outputResolution.getWidth(), outputResolution.getHeight());
-
-            videoOutputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-            videoOutputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
-            videoOutputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-            videoOutputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-
-
             MuxRender muxRender = new MuxRender(mediaMuxer);
 
             // identify track indices
@@ -102,8 +94,11 @@ class Mp4ComposerEngine {
                 audioTrackIndex = 0;
             }
 
+            final MediaFormat desiredVideoOutputFormat = mediaExtractor.getTrackFormat(videoTrackIndex);
+            final MediaFormat actualVideoOutputFormat = correctOutputVideoFormatForAvailableEncoders(desiredVideoOutputFormat, bitrate, outputResolution);
+
             // setup video composer
-            videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, videoOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs);
+            videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, actualVideoOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs);
             videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem, flipVertical, flipHorizontal);
             mediaExtractor.selectTrack(videoTrackIndex);
 
@@ -171,8 +166,44 @@ class Mp4ComposerEngine {
 
     }
 
+    private static MediaFormat correctOutputVideoFormatForAvailableEncoders(final MediaFormat desiredOutputFormat, final int bitrate, final SizeCompat outputResolution) {
+        final MediaCodecListCompat mediaCodecList = new MediaCodecListCompat();
+        final String encoderForOutputFormat = mediaCodecList.findEncoderForFormat(desiredOutputFormat);
+        final MediaFormat outputFormat;
+
+        Log.d(TAG, "Desired video format: " + desiredOutputFormat);
+
+        if (encoderForOutputFormat != null && isSupportedByMpeg4(desiredOutputFormat)) {
+            // If we found an encoder, then we can encode to this format.
+            outputFormat = MediaFormat.createVideoFormat(desiredOutputFormat.getString(MediaFormat.KEY_MIME), outputResolution.getWidth(), outputResolution.getHeight());
+            outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+            // Required but ignored by the encoder
+            outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+            outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+            outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        } else {
+            // Otherwise, fall back to a format that should be supported, AVC.
+            outputFormat = MediaFormat.createVideoFormat("video/avc", outputResolution.getWidth(), outputResolution.getHeight());
+
+            outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+            // Required but ignored by the encoder
+            outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+            outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+            outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        }
+
+        Log.d(TAG, "Actual video format: " + outputFormat);
+        return outputFormat;
+    }
+
     private static boolean isSupportedByMpeg4(final MediaFormat mediaFormat) {
         switch (mediaFormat.getString(MediaFormat.KEY_MIME)) {
+            case MediaFormat.MIMETYPE_VIDEO_HEVC:
+            case MediaFormat.MIMETYPE_VIDEO_MPEG4:
+            case MediaFormat.MIMETYPE_VIDEO_MPEG2:
+            // Supported, but worse than MPEG4 so we'll fall back.
+            // case MediaFormat.MIMETYPE_VIDEO_H263:
+                return true;
             case MediaFormat.MIMETYPE_AUDIO_AAC:
             case MediaFormat.MIMETYPE_AUDIO_VORBIS:
             case MediaFormat.MIMETYPE_AUDIO_MPEG:
