@@ -10,6 +10,7 @@ import android.util.Log;
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
+import com.daasuu.mp4compose.compat.MediaCodecListCompat;
 import com.daasuu.mp4compose.compat.SizeCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
 
@@ -109,11 +110,13 @@ class Mp4ComposerEngine {
             // setup audio if present and not muted
             if (mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) != null && !mute) {
                 // has Audio video
+                final MediaFormat desiredOutputFormat = mediaExtractor.getTrackFormat(audioTrackIndex);
+                final MediaFormat actualOutputFormat = correctOutputAudioFormatForAvailableEncoders(desiredOutputFormat);
 
-                if (timeScale < 2) {
+                if (timeScale < 2 && actualOutputFormat.equals(desiredOutputFormat)) {
                     audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender, trimStartMs, trimEndMs);
                 } else {
-                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, mediaExtractor.getTrackFormat(audioTrackIndex), muxRender, timeScale, trimStartMs, trimEndMs);
+                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, actualOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs);
                 }
 
                 audioComposer.setup();
@@ -168,6 +171,43 @@ class Mp4ComposerEngine {
 
     }
 
+    private static boolean isSupportedByMpeg4(final MediaFormat mediaFormat) {
+        switch (mediaFormat.getString(MediaFormat.KEY_MIME)) {
+            case MediaFormat.MIMETYPE_AUDIO_AAC:
+            case MediaFormat.MIMETYPE_AUDIO_VORBIS:
+            case MediaFormat.MIMETYPE_AUDIO_MPEG:
+            case MediaFormat.MIMETYPE_AUDIO_AC3:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static MediaFormat correctOutputAudioFormatForAvailableEncoders(final MediaFormat desiredOutputFormat) {
+        final MediaCodecListCompat mediaCodecList = new MediaCodecListCompat();
+        final String encoderForOutputFormat = mediaCodecList.findEncoderForFormat(desiredOutputFormat);
+        final MediaFormat outputFormat;
+
+        Log.d(TAG, "Desired audio format: " + desiredOutputFormat);
+
+        if (encoderForOutputFormat != null && isSupportedByMpeg4(desiredOutputFormat)) {
+            // If we found an encoder, then we can encode to this format.
+            outputFormat = desiredOutputFormat;
+        } else {
+            // Otherwise, fall back to a format that should be supported, AAC.
+            outputFormat = new MediaFormat();
+            outputFormat.setString(MediaFormat.KEY_MIME, "audio/mp4a-latm");
+            outputFormat.setInteger(MediaFormat.KEY_AAC_PROFILE,
+                    MediaCodecInfo.CodecProfileLevel.AACObjectELD);
+            outputFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, desiredOutputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+            outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, 128000);
+            outputFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, desiredOutputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
+        }
+
+        Log.d(TAG, "Desired audio format: " + outputFormat);
+
+        return outputFormat;
+    }
 
     private void runPipelines() {
         long loopCount = 0;
