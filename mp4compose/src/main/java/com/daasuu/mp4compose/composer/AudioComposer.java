@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -12,6 +13,9 @@ import java.util.concurrent.TimeUnit;
 
 // Refer: https://github.com/ypresto/android-transcoder/blob/master/lib/src/main/java/net/ypresto/androidtranscoder/engine/PassThroughTrackTranscoder.java
 class AudioComposer implements IAudioComposer {
+
+    private static final String TAG = "AudioComposer";
+
     private final MediaExtractor mediaExtractor;
     private final int trackIndex;
     private final MuxRender muxRender;
@@ -36,7 +40,7 @@ class AudioComposer implements IAudioComposer {
 
         actualOutputFormat = this.mediaExtractor.getTrackFormat(this.trackIndex);
         this.muxRender.setOutputFormat(this.sampleType, actualOutputFormat);
-        bufferSize = actualOutputFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE);
+        bufferSize = actualOutputFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE) ? actualOutputFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE) : (64 * 1024);
         buffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder());
     }
 
@@ -56,7 +60,11 @@ class AudioComposer implements IAudioComposer {
 
         buffer.clear();
         int sampleSize = mediaExtractor.readSampleData(buffer, 0);
-        assert sampleSize <= bufferSize;
+        if (sampleSize > bufferSize) {
+            Log.w(TAG, "Sample size smaller than buffer size, resizing buffer: " + sampleSize);
+            bufferSize = 2 * sampleSize;
+            buffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder());
+        }
         boolean isKeyFrame = (mediaExtractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0;
         int flags = isKeyFrame ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0;
 
