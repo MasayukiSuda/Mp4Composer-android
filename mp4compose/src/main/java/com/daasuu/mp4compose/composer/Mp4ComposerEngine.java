@@ -218,7 +218,7 @@ class Mp4ComposerEngine {
             outputFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, desiredOutputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
         }
 
-        Log.d(TAG, "Desired audio format: " + outputFormat);
+        Log.d(TAG, "Actual audio format: " + outputFormat);
 
         return outputFormat;
     }
