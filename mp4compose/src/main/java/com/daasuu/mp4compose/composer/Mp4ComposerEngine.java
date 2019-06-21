@@ -106,7 +106,7 @@ class Mp4ComposerEngine {
             final MediaFormat actualVideoOutputFormat = correctOutputVideoFormatForAvailableEncoders(desiredVideoOutputFormat, bitrate, outputResolution);
 
             // setup video composer
-            videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, actualVideoOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs);
+            videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, actualVideoOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs, logger);
             videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem, flipVertical, flipHorizontal);
             mediaExtractor.selectTrack(videoTrackIndex);
 
@@ -117,7 +117,7 @@ class Mp4ComposerEngine {
                 final MediaFormat actualOutputFormat = correctOutputAudioFormatForAvailableEncoders(desiredOutputFormat);
 
                 if (timeScale < 2 && actualOutputFormat.equals(desiredOutputFormat)) {
-                    audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender, trimStartMs, trimEndMs);
+                    audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender, trimStartMs, trimEndMs, logger);
                 } else {
                     audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, actualOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs);
                 }
