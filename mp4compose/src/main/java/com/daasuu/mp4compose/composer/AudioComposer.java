@@ -6,6 +6,10 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import com.daasuu.mp4compose.logger.Logger;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
@@ -30,13 +34,17 @@ class AudioComposer implements IAudioComposer {
     private final long trimStartUs;
     private final long trimEndUs;
 
-    AudioComposer(MediaExtractor mediaExtractor, int trackIndex,
-                  MuxRender muxRender, long trimStartMs, long trimEndMs) {
+    private final Logger logger;
+
+    AudioComposer(@NonNull MediaExtractor mediaExtractor, int trackIndex,
+                  @NonNull MuxRender muxRender, long trimStartMs, long trimEndMs,
+                  @NonNull Logger logger) {
         this.mediaExtractor = mediaExtractor;
         this.trackIndex = trackIndex;
         this.muxRender = muxRender;
         this.trimStartUs = TimeUnit.MILLISECONDS.toMicros(trimStartMs);
         this.trimEndUs = trimEndMs == -1 ? trimEndMs : TimeUnit.MILLISECONDS.toMicros(trimEndMs);
+        this.logger = logger
 
         actualOutputFormat = this.mediaExtractor.getTrackFormat(this.trackIndex);
         this.muxRender.setOutputFormat(this.sampleType, actualOutputFormat);
@@ -61,7 +69,7 @@ class AudioComposer implements IAudioComposer {
         buffer.clear();
         int sampleSize = mediaExtractor.readSampleData(buffer, 0);
         if (sampleSize > bufferSize) {
-            Log.w(TAG, "Sample size smaller than buffer size, resizing buffer: " + sampleSize);
+            logger.warning(TAG, "Sample size smaller than buffer size, resizing buffer: " + sampleSize);
             bufferSize = 2 * sampleSize;
             buffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder());
         }

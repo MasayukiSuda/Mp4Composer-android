@@ -5,11 +5,14 @@ import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 
+import androidx.annotation.NonNull;
+
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.compat.SizeCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
+import com.daasuu.mp4compose.logger.Logger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,9 +48,11 @@ class VideoComposer {
     private final long trimStartUs;
     private final long trimEndUs;
 
-    VideoComposer(MediaExtractor mediaExtractor, int trackIndex,
-                  MediaFormat outputFormat, MuxRender muxRender, int timeScale,
-                  final long trimStartMs, final long trimEndMs) {
+    private final Logger logger;
+
+    VideoComposer(@NonNull MediaExtractor mediaExtractor, int trackIndex,
+                  @NonNull MediaFormat outputFormat, @NonNull MuxRender muxRender, int timeScale,
+                  final long trimStartMs, final long trimEndMs, @NonNull Logger logger) {
         this.mediaExtractor = mediaExtractor;
         this.trackIndex = trackIndex;
         this.outputFormat = outputFormat;
@@ -55,6 +60,7 @@ class VideoComposer {
         this.timeScale = timeScale;
         this.trimStartUs = TimeUnit.MILLISECONDS.toMicros(trimStartMs);
         this.trimEndUs = trimEndMs == -1 ? trimEndMs : TimeUnit.MILLISECONDS.toMicros(trimEndMs);
+        this.logger = logger;
     }
 
 
@@ -87,7 +93,7 @@ class VideoComposer {
             // refer: https://android.googlesource.com/platform/frameworks/av/+blame/lollipop-release/media/libstagefright/Utils.cpp
             inputFormat.setInteger("rotation-degrees", 0);
         }
-        decoderSurface = new DecoderSurface(filter);
+        decoderSurface = new DecoderSurface(filter, logger);
         decoderSurface.setRotation(rotation);
         decoderSurface.setOutputResolution(outputResolution);
         decoderSurface.setInputResolution(inputResolution);

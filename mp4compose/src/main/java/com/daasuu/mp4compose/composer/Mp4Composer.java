@@ -1,8 +1,8 @@
 package com.daasuu.mp4compose.composer;
 
 import android.media.MediaMetadataRetriever;
-import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.daasuu.mp4compose.FillMode;
@@ -10,6 +10,8 @@ import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.compat.SizeCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
+import com.daasuu.mp4compose.logger.AndroidLogger;
+import com.daasuu.mp4compose.logger.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,6 +45,8 @@ public class Mp4Composer {
     private long trimEndMs = -1;
 
     private ExecutorService executorService;
+
+    private Logger logger = new AndroidLogger();
 
 
     public Mp4Composer(final String srcPath, final String destPath) {
@@ -108,6 +112,17 @@ public class Mp4Composer {
     }
 
     /**
+     * Set the {@link Logger} that should be used. Defaults to {@link AndroidLogger} if none is set.
+     *
+     * @param logger The logger that should be used to log.
+     * @return The composer instance.
+     */
+    public Mp4Composer logger(@NonNull final Logger logger) {
+        this.logger = logger;
+        return this;
+    }
+
+    /**
      * Trim the video to the provided times. By default the video will not be trimmed.
      *
      * @param trimStartMs The start time of the trim in milliseconds.
@@ -132,7 +147,7 @@ public class Mp4Composer {
         getExecutorService().execute(new Runnable() {
             @Override
             public void run() {
-                Mp4ComposerEngine engine = new Mp4ComposerEngine();
+                Mp4ComposerEngine engine = new Mp4ComposerEngine(logger);
 
                 engine.setProgressCallback(new Mp4ComposerEngine.ProgressCallback() {
                     @Override
@@ -210,10 +225,10 @@ public class Mp4Composer {
                     timeScale = 1;
                 }
 
-                Log.d(TAG, "rotation = " + (rotation.getRotation() + videoRotate));
-                Log.d(TAG, "inputResolution width = " + srcVideoResolution.getWidth() + " height = " + srcVideoResolution.getHeight());
-                Log.d(TAG, "outputResolution width = " + outputResolution.getWidth() + " height = " + outputResolution.getHeight());
-                Log.d(TAG, "fillMode = " + fillMode);
+                logger.debug(TAG, "rotation = " + (rotation.getRotation() + videoRotate));
+                logger.debug(TAG, "inputResolution width = " + srcVideoResolution.getWidth() + " height = " + srcVideoResolution.getHeight());
+                logger.debug(TAG, "outputResolution width = " + outputResolution.getWidth() + " height = " + outputResolution.getHeight());
+                logger.debug(TAG, "fillMode = " + fillMode);
 
                 try {
                     if (bitrate < 0) {
@@ -290,13 +305,13 @@ public class Mp4Composer {
             String orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
             return Integer.valueOf(orientation);
         } catch (IllegalArgumentException e) {
-            Log.e("MediaMetadataRetriever", "getVideoRotation IllegalArgumentException");
+            logger.error("MediaMetadataRetriever", "getVideoRotation IllegalArgumentException", e);
             return 0;
         } catch (RuntimeException e) {
-            Log.e("MediaMetadataRetriever", "getVideoRotation RuntimeException");
+            logger.error("MediaMetadataRetriever", "getVideoRotation RuntimeException", e);
             return 0;
         } catch (Exception e) {
-            Log.e("MediaMetadataRetriever", "getVideoRotation Exception");
+            logger.error("MediaMetadataRetriever", "getVideoRotation Exception", e);
             return 0;
         } finally {
             try {
@@ -304,14 +319,14 @@ public class Mp4Composer {
                     mediaMetadataRetriever.release();
                 }
             } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release mediaMetadataRetriever.", e);
+                logger.error(TAG, "Failed to release mediaMetadataRetriever.", e);
             }
         }
     }
 
     private int calcBitRate(int width, int height) {
         final int bitrate = (int) (0.25 * 30 * width * height);
-        Log.i(TAG, "bitrate=" + bitrate);
+        logger.debug(TAG, "bitrate=" + bitrate);
         return bitrate;
     }
 
@@ -322,7 +337,7 @@ public class Mp4Composer {
      * @param path The path of the video.
      */
     @Nullable
-    private static SizeCompat getVideoResolution(final String path) {
+    private SizeCompat getVideoResolution(final String path) {
         MediaMetadataRetriever retriever = null;
         try {
             retriever = new MediaMetadataRetriever();
@@ -342,7 +357,7 @@ public class Mp4Composer {
                     retriever.release();
                 }
             } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release mediaMetadataRetriever.", e);
+                logger.error(TAG, "Failed to release mediaMetadataRetriever.", e);
             }
         }
     }

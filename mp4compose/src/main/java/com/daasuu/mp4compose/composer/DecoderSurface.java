@@ -7,8 +7,9 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.util.Log;
 import android.view.Surface;
+
+import androidx.annotation.NonNull;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
@@ -18,6 +19,7 @@ import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.gl.GlFramebufferObject;
 import com.daasuu.mp4compose.gl.GlPreviewFilter;
 import com.daasuu.mp4compose.gl.GlSurfaceTexture;
+import com.daasuu.mp4compose.logger.Logger;
 import com.daasuu.mp4compose.utils.EglUtil;
 
 import static android.opengl.GLES20.GL_COLOR_BUFFER_BIT;
@@ -80,12 +82,15 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
     private boolean flipVertical = false;
     private boolean flipHorizontal = false;
 
+    private final Logger logger;
+
     /**
      * Creates an DecoderSurface using the current EGL context (rather than establishing a
      * new one).  Creates a Surface that can be passed to MediaCodec.configure().
      */
-    DecoderSurface(GlFilter filter) {
+    DecoderSurface(@NonNull GlFilter filter, @NonNull Logger logger) {
         this.filter = filter;
+        this.logger = logger;
         setup();
     }
 
@@ -313,7 +318,7 @@ class DecoderSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     @Override
     public void onFrameAvailable(SurfaceTexture st) {
-        if (VERBOSE) Log.d(TAG, "new frame available");
+        if (VERBOSE) logger.debug(TAG, "new frame available");
         synchronized (frameSyncObject) {
             if (frameAvailable) {
                 throw new RuntimeException("frameAvailable already set, frame could be dropped");

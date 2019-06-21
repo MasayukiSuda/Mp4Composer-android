@@ -5,7 +5,8 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
-import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
@@ -14,6 +15,7 @@ import com.daasuu.mp4compose.compat.MediaCodecListCompat;
 import com.daasuu.mp4compose.compat.MediaFormatCompat;
 import com.daasuu.mp4compose.compat.SizeCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
+import com.daasuu.mp4compose.logger.Logger;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -24,6 +26,7 @@ import java.io.IOException;
  * Internal engine, do not use this directly.
  */
 class Mp4ComposerEngine {
+
     private static final String TAG = "Mp4ComposerEngine";
     private static final double PROGRESS_UNKNOWN = -1.0;
     private static final long SLEEP_TO_WAIT_TRACK_TRANSCODERS = 10;
@@ -36,7 +39,11 @@ class Mp4ComposerEngine {
     private ProgressCallback progressCallback;
     private long durationUs;
     private MediaMetadataRetriever mediaMetadataRetriever;
+    private final Logger logger;
 
+    public Mp4ComposerEngine(@NonNull final Logger logger) {
+        this.logger = logger;
+    }
 
     void setDataSource(FileDescriptor fileDescriptor) {
         inputFileDescriptor = fileDescriptor;
@@ -76,9 +83,9 @@ class Mp4ComposerEngine {
             } catch (NumberFormatException e) {
                 durationUs = -1;
             }
-            Log.d(TAG, "Duration (us): " + durationUs);
+            logger.debug(TAG, "Duration (us): " + durationUs);
 
-            MuxRender muxRender = new MuxRender(mediaMuxer);
+            MuxRender muxRender = new MuxRender(mediaMuxer, logger);
 
             // identify track indices
             MediaFormat format = mediaExtractor.getTrackFormat(0);
@@ -152,7 +159,7 @@ class Mp4ComposerEngine {
                     mediaMuxer = null;
                 }
             } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release mediaMuxer.", e);
+                logger.error(TAG, "Failed to release mediaMuxer.", e);
             }
             try {
                 if (mediaMetadataRetriever != null) {
@@ -160,19 +167,20 @@ class Mp4ComposerEngine {
                     mediaMetadataRetriever = null;
                 }
             } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release mediaMetadataRetriever.", e);
+                logger.error(TAG, "Failed to release mediaMetadataRetriever.", e);
             }
         }
 
 
     }
 
-    private static MediaFormat correctOutputVideoFormatForAvailableEncoders(final MediaFormat desiredOutputFormat, final int bitrate, final SizeCompat outputResolution) {
+    @NonNull
+    private MediaFormat correctOutputVideoFormatForAvailableEncoders(final MediaFormat desiredOutputFormat, final int bitrate, final SizeCompat outputResolution) {
         final MediaCodecListCompat mediaCodecList = new MediaCodecListCompat();
         final String encoderForOutputFormat = mediaCodecList.findEncoderForFormat(desiredOutputFormat);
         final MediaFormat outputFormat;
 
-        Log.d(TAG, "Desired video format: " + desiredOutputFormat);
+        logger.debug(TAG, "Desired video format: " + desiredOutputFormat);
 
         desiredOutputFormat.setString(MediaFormat.KEY_FRAME_RATE, null);
         if (encoderForOutputFormat != null && isSupportedByMpeg4(desiredOutputFormat)) {
@@ -194,16 +202,17 @@ class Mp4ComposerEngine {
             outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         }
 
-        Log.d(TAG, "Actual video format: " + outputFormat);
+        logger.debug(TAG, "Actual video format: " + outputFormat);
         return outputFormat;
     }
 
-    private static MediaFormat correctOutputAudioFormatForAvailableEncoders(final MediaFormat desiredOutputFormat) {
+    @NonNull
+    private MediaFormat correctOutputAudioFormatForAvailableEncoders(final MediaFormat desiredOutputFormat) {
         final MediaCodecListCompat mediaCodecList = new MediaCodecListCompat();
         final String encoderForOutputFormat = mediaCodecList.findEncoderForFormat(desiredOutputFormat);
         final MediaFormat outputFormat;
 
-        Log.d(TAG, "Desired audio format: " + desiredOutputFormat);
+        logger.debug(TAG, "Desired audio format: " + desiredOutputFormat);
 
         if (encoderForOutputFormat != null && isSupportedByMpeg4(desiredOutputFormat)) {
             // If we found an encoder, then we can encode to this format.
@@ -219,7 +228,7 @@ class Mp4ComposerEngine {
             outputFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, desiredOutputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
         }
 
-        Log.d(TAG, "Actual audio format: " + outputFormat);
+        logger.debug(TAG, "Actual audio format: " + outputFormat);
 
         return outputFormat;
     }
@@ -230,8 +239,8 @@ class Mp4ComposerEngine {
             case MediaFormatCompat.MIMETYPE_VIDEO_HEVC:
             case MediaFormatCompat.MIMETYPE_VIDEO_MPEG4:
             case MediaFormatCompat.MIMETYPE_VIDEO_MPEG2:
-            // Supported, but worse than MPEG4 so we'll fall back.
-            // case MediaFormatCompat.MIMETYPE_VIDEO_H263:
+                // Supported, but worse than MPEG4 so we'll fall back.
+                // case MediaFormatCompat.MIMETYPE_VIDEO_H263:
                 return true;
             case MediaFormatCompat.MIMETYPE_AUDIO_AAC:
             case MediaFormatCompat.MIMETYPE_AUDIO_VORBIS:

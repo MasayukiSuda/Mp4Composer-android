@@ -3,7 +3,10 @@ package com.daasuu.mp4compose.composer;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
-import android.util.Log;
+
+import androidx.annotation.NonNull;
+
+import com.daasuu.mp4compose.logger.Logger;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,6 +16,7 @@ import java.util.List;
 // Refer: https://github.com/ypresto/android-transcoder/blob/master/lib/src/main/java/net/ypresto/androidtranscoder/engine/QueuedMuxer.java
 
 class MuxRender {
+
     private static final String TAG = "MuxRender";
     private static final int BUFFER_SIZE = 64 * 1024; // I have no idea whether this value is appropriate or not...
     private final MediaMuxer muxer;
@@ -23,9 +27,11 @@ class MuxRender {
     private ByteBuffer byteBuffer;
     private final List<SampleInfo> sampleInfoList;
     private boolean started;
+    private final Logger logger;
 
-    MuxRender(MediaMuxer muxer) {
+    MuxRender(@NonNull MediaMuxer muxer, @NonNull Logger logger) {
         this.muxer = muxer;
+        this.logger = logger;
         sampleInfoList = new ArrayList<>();
     }
 
@@ -47,14 +53,14 @@ class MuxRender {
         if (videoFormat != null && audioFormat != null) {
 
             videoTrackIndex = muxer.addTrack(videoFormat);
-            Log.v(TAG, "Added track #" + videoTrackIndex + " with " + videoFormat.getString(MediaFormat.KEY_MIME) + " to muxer");
+            logger.debug(TAG, "Added track #" + videoTrackIndex + " with " + videoFormat.getString(MediaFormat.KEY_MIME) + " to muxer");
             audioTrackIndex = muxer.addTrack(audioFormat);
-            Log.v(TAG, "Added track #" + audioTrackIndex + " with " + audioFormat.getString(MediaFormat.KEY_MIME) + " to muxer");
+            logger.debug(TAG, "Added track #" + audioTrackIndex + " with " + audioFormat.getString(MediaFormat.KEY_MIME) + " to muxer");
 
         } else if (videoFormat != null) {
 
             videoTrackIndex = muxer.addTrack(videoFormat);
-            Log.v(TAG, "Added track #" + videoTrackIndex + " with " + videoFormat.getString(MediaFormat.KEY_MIME) + " to muxer");
+            logger.debug(TAG, "Added track #" + videoTrackIndex + " with " + videoFormat.getString(MediaFormat.KEY_MIME) + " to muxer");
 
         }
 
@@ -65,7 +71,7 @@ class MuxRender {
             byteBuffer = ByteBuffer.allocate(0);
         }
         byteBuffer.flip();
-        Log.v(TAG, "Output format determined, writing " + sampleInfoList.size() +
+        logger.debug(TAG, "Output format determined, writing " + sampleInfoList.size() +
                 " samples / " + byteBuffer.limit() + " bytes to muxer.");
         MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
         int offset = 0;
