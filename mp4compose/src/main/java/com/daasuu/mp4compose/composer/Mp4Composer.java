@@ -3,6 +3,8 @@ package com.daasuu.mp4compose.composer;
 import android.media.MediaMetadataRetriever;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
@@ -150,6 +152,7 @@ public class Mp4Composer {
                     if (listener != null) {
                         listener.onFailed(e);
                     }
+                    executorService.shutdown();
                     return;
                 }
 
@@ -160,11 +163,20 @@ public class Mp4Composer {
                     if (listener != null) {
                         listener.onFailed(e);
                     }
+                    executorService.shutdown();
                     return;
                 }
 
                 final int videoRotate = getVideoRotation(srcPath);
-                final SizeCompat srcVideoResolution = getVideoResolution(srcPath, videoRotate);
+                final SizeCompat srcVideoResolution = getVideoResolution(srcPath);
+
+                if (srcVideoResolution == null) {
+                    if (listener != null) {
+                        listener.onFailed(new UnsupportedOperationException("File type unsupported, path: " + srcPath));
+                    }
+                    executorService.shutdown();
+                    return;
+                }
 
                 if (filter == null) {
                     filter = new GlFilter();
@@ -303,13 +315,25 @@ public class Mp4Composer {
         return bitrate;
     }
 
-    private SizeCompat getVideoResolution(final String path, final int rotation) {
+    /**
+     * Extract the resolution of the video at the provided path, or null if the format is
+     * unsupported.
+     *
+     * @param path The path of the video.
+     */
+    @Nullable
+    private static SizeCompat getVideoResolution(final String path) {
         MediaMetadataRetriever retriever = null;
         try {
             retriever = new MediaMetadataRetriever();
             retriever.setDataSource(path);
-            int width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-            int height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+            final String rawWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+            final String rawHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+            if (rawWidth == null || rawHeight == null) {
+                return null;
+            }
+            final int width = Integer.valueOf(rawWidth);
+            final int height = Integer.valueOf(rawHeight);
 
             return new SizeCompat(width, height);
         } finally {
