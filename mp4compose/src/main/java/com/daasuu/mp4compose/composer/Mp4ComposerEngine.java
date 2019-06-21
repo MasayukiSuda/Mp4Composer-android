@@ -174,6 +174,7 @@ class Mp4ComposerEngine {
 
         Log.d(TAG, "Desired video format: " + desiredOutputFormat);
 
+        desiredOutputFormat.setString(MediaFormat.KEY_FRAME_RATE, null);
         if (encoderForOutputFormat != null && isSupportedByMpeg4(desiredOutputFormat)) {
             // If we found an encoder, then we can encode to this format.
             outputFormat = MediaFormat.createVideoFormat(desiredOutputFormat.getString(MediaFormat.KEY_MIME), outputResolution.getWidth(), outputResolution.getHeight());
