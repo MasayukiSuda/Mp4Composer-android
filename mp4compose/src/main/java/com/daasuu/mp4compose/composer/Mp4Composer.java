@@ -182,10 +182,10 @@ public class Mp4Composer {
                     return;
                 }
 
-                final int videoRotate = getVideoRotation(srcPath);
+                final Integer videoRotate = getVideoRotation(srcPath);
                 final SizeCompat srcVideoResolution = getVideoResolution(srcPath);
 
-                if (srcVideoResolution == null) {
+                if (srcVideoResolution == null || videoRotate == null) {
                     if (listener != null) {
                         listener.onFailed(new UnsupportedOperationException("File type unsupported, path: " + srcPath));
                     }
@@ -297,12 +297,16 @@ public class Mp4Composer {
         void onFailed(Exception exception);
     }
 
-    private int getVideoRotation(String videoFilePath) {
+    @Nullable
+    private Integer getVideoRotation(String videoFilePath) {
         MediaMetadataRetriever mediaMetadataRetriever = null;
         try {
             mediaMetadataRetriever = new MediaMetadataRetriever();
             mediaMetadataRetriever.setDataSource(videoFilePath);
-            String orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+            final String orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+            if (orientation == null){
+                return null;
+            }
             return Integer.valueOf(orientation);
         } catch (IllegalArgumentException e) {
             logger.error("MediaMetadataRetriever", "getVideoRotation IllegalArgumentException", e);
