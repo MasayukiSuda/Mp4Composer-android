@@ -163,7 +163,7 @@ public class Mp4Composer {
                 try {
                     fileInputStream = new FileInputStream(srcFile);
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                    logger.error(TAG, "Unable to find input file", e);
                     if (listener != null) {
                         listener.onFailed(e);
                     }
@@ -174,7 +174,7 @@ public class Mp4Composer {
                 try {
                     engine.setDataSource(fileInputStream.getFD());
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.error(TAG, "Unable to read input file", e);
                     if (listener != null) {
                         listener.onFailed(e);
                     }
@@ -252,7 +252,7 @@ public class Mp4Composer {
                     );
 
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error(TAG, "Unable to compose the engine", e);
                     if (listener != null) {
                         listener.onFailed(e);
                     }
