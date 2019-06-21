@@ -197,25 +197,6 @@ class Mp4ComposerEngine {
         return outputFormat;
     }
 
-    private static boolean isSupportedByMpeg4(final MediaFormat mediaFormat) {
-        switch (mediaFormat.getString(MediaFormat.KEY_MIME)) {
-            case MediaFormatCompat.MIMETYPE_VIDEO_AVC:
-            case MediaFormatCompat.MIMETYPE_VIDEO_HEVC:
-            case MediaFormatCompat.MIMETYPE_VIDEO_MPEG4:
-            case MediaFormatCompat.MIMETYPE_VIDEO_MPEG2:
-            // Supported, but worse than MPEG4 so we'll fall back.
-            // case MediaFormatCompat.MIMETYPE_VIDEO_H263:
-                return true;
-            case MediaFormatCompat.MIMETYPE_AUDIO_AAC:
-            case MediaFormatCompat.MIMETYPE_AUDIO_VORBIS:
-            case MediaFormatCompat.MIMETYPE_AUDIO_MPEG:
-            case MediaFormatCompat.MIMETYPE_AUDIO_AC3:
-                return true;
-            default:
-                return false;
-        }
-    }
-
     private static MediaFormat correctOutputAudioFormatForAvailableEncoders(final MediaFormat desiredOutputFormat) {
         final MediaCodecListCompat mediaCodecList = new MediaCodecListCompat();
         final String encoderForOutputFormat = mediaCodecList.findEncoderForFormat(desiredOutputFormat);
@@ -240,6 +221,25 @@ class Mp4ComposerEngine {
         Log.d(TAG, "Desired audio format: " + outputFormat);
 
         return outputFormat;
+    }
+
+    private static boolean isSupportedByMpeg4(final MediaFormat mediaFormat) {
+        switch (mediaFormat.getString(MediaFormat.KEY_MIME)) {
+            case MediaFormatCompat.MIMETYPE_VIDEO_AVC:
+            case MediaFormatCompat.MIMETYPE_VIDEO_HEVC:
+            case MediaFormatCompat.MIMETYPE_VIDEO_MPEG4:
+            case MediaFormatCompat.MIMETYPE_VIDEO_MPEG2:
+            // Supported, but worse than MPEG4 so we'll fall back.
+            // case MediaFormatCompat.MIMETYPE_VIDEO_H263:
+                return true;
+            case MediaFormatCompat.MIMETYPE_AUDIO_AAC:
+            case MediaFormatCompat.MIMETYPE_AUDIO_VORBIS:
+            case MediaFormatCompat.MIMETYPE_AUDIO_MPEG:
+            case MediaFormatCompat.MIMETYPE_AUDIO_AC3:
+                return true;
+            default:
+                return false;
+        }
     }
 
     private void runPipelines() {
