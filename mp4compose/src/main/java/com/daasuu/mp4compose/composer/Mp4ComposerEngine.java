@@ -237,10 +237,10 @@ class Mp4ComposerEngine {
         switch (mediaFormat.getString(MediaFormat.KEY_MIME)) {
             case MediaFormatCompat.MIMETYPE_VIDEO_AVC:
             case MediaFormatCompat.MIMETYPE_VIDEO_HEVC:
-            case MediaFormatCompat.MIMETYPE_VIDEO_MPEG4:
-            case MediaFormatCompat.MIMETYPE_VIDEO_MPEG2:
-                // Supported, but worse than MPEG4 so we'll fall back.
-                // case MediaFormatCompat.MIMETYPE_VIDEO_H263:
+            // Supported, but worse than AVC so we'll fall back.
+            // case MediaFormatCompat.MIMETYPE_VIDEO_MPEG4:
+            // case MediaFormatCompat.MIMETYPE_VIDEO_MPEG2:
+            // case MediaFormatCompat.MIMETYPE_VIDEO_H263:
                 return true;
             case MediaFormatCompat.MIMETYPE_AUDIO_AAC:
             case MediaFormatCompat.MIMETYPE_AUDIO_VORBIS:
