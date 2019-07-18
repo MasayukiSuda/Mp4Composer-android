@@ -6,6 +6,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.util.Size;
 
 import androidx.annotation.NonNull;
 
@@ -13,7 +14,6 @@ import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.compat.MediaFormatCompat;
-import com.daasuu.mp4compose.compat.SizeCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.logger.Logger;
 
@@ -56,12 +56,12 @@ class Mp4ComposerEngine {
 
     void compose(
             final String destPath,
-            final SizeCompat outputResolution,
+            final Size outputResolution,
             final GlFilter filter,
             final int bitrate,
             final boolean mute,
             final Rotation rotation,
-            final SizeCompat inputResolution,
+            final Size inputResolution,
             final FillMode fillMode,
             final FillModeCustomItem fillModeCustomItem,
             final int timeScale,
@@ -175,7 +175,7 @@ class Mp4ComposerEngine {
     }
 
     @NonNull
-    private MediaFormat correctOutputVideoFormatForAvailableEncoders(final MediaFormat desiredOutputFormat, final int bitrate, final SizeCompat outputResolution) {
+    private MediaFormat correctOutputVideoFormatForAvailableEncoders(final MediaFormat desiredOutputFormat, final int bitrate, final Size outputResolution) {
         final MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         final String encoderForOutputFormat = mediaCodecList.findEncoderForFormat(desiredOutputFormat);
         final MediaFormat outputFormat;

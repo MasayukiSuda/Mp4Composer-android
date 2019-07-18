@@ -5,8 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
-
-import com.daasuu.mp4compose.compat.SizeCompat;
+import android.util.Size;
 
 /**
  * Created by sudamasayuki on 2018/01/07.
@@ -18,7 +17,7 @@ public abstract class GlOverlayFilter extends GlFilter {
 
     private Bitmap bitmap = null;
 
-    protected SizeCompat inputResolution = new SizeCompat(1280, 720);
+    protected Size inputResolution = new Size(1280, 720);
 
     public GlOverlayFilter() {
         super(DEFAULT_VERTEX_SHADER, FRAGMENT_SHADER);
@@ -36,14 +35,14 @@ public abstract class GlOverlayFilter extends GlFilter {
                     "   gl_FragColor = mix(textureColor, textureColor2, textureColor2.a);\n" +
                     "}\n";
 
-    public void setResolution(SizeCompat resolution) {
+    public void setResolution(Size resolution) {
         this.inputResolution = resolution;
     }
 
     @Override
     public void setFrameSize(int width, int height) {
         super.setFrameSize(width, height);
-        setResolution(new SizeCompat(width, height));
+        setResolution(new Size(width, height));
     }
 
     private void createBitmap() {

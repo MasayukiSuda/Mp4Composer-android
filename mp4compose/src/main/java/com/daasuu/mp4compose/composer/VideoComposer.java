@@ -4,13 +4,13 @@ package com.daasuu.mp4compose.composer;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.util.Size;
 
 import androidx.annotation.NonNull;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
-import com.daasuu.mp4compose.compat.SizeCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.logger.Logger;
 
@@ -66,8 +66,8 @@ class VideoComposer {
 
     void setUp(GlFilter filter,
                Rotation rotation,
-               SizeCompat outputResolution,
-               SizeCompat inputResolution,
+               Size outputResolution,
+               Size inputResolution,
                FillMode fillMode,
                FillModeCustomItem fillModeCustomItem,
                final boolean flipVertical,
