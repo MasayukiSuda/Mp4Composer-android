@@ -13,7 +13,6 @@ import androidx.annotation.NonNull;
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
-import com.daasuu.mp4compose.compat.MediaFormatCompat;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.logger.Logger;
 
@@ -28,6 +27,7 @@ import java.io.IOException;
 class Mp4ComposerEngine {
 
     private static final String TAG = "Mp4ComposerEngine";
+    private static final String VIDEO_PREFIX = "video/";
     private static final double PROGRESS_UNKNOWN = -1.0;
     private static final long SLEEP_TO_WAIT_TRACK_TRANSCODERS = 10;
     private static final long PROGRESS_INTERVAL_STEPS = 10;
@@ -94,7 +94,7 @@ class Mp4ComposerEngine {
             final int videoTrackIndex;
             final int audioTrackIndex;
 
-            if (mime.startsWith(MediaFormatCompat.VIDEO_PREFIX)) {
+            if (mime.startsWith(VIDEO_PREFIX)) {
                 videoTrackIndex = 0;
                 audioTrackIndex = 1;
             } else {
@@ -193,7 +193,7 @@ class Mp4ComposerEngine {
             outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         } else {
             // Otherwise, fall back to a format that should be supported, AVC.
-            outputFormat = MediaFormat.createVideoFormat(MediaFormatCompat.MIMETYPE_VIDEO_AVC, outputResolution.getWidth(), outputResolution.getHeight());
+            outputFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, outputResolution.getWidth(), outputResolution.getHeight());
 
             outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
             // Required but ignored by the encoder
@@ -220,7 +220,7 @@ class Mp4ComposerEngine {
         } else {
             // Otherwise, fall back to a format that should be supported, AAC.
             outputFormat = new MediaFormat();
-            outputFormat.setString(MediaFormat.KEY_MIME, MediaFormatCompat.MIMETYPE_AUDIO_AAC);
+            outputFormat.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_AAC);
             outputFormat.setInteger(MediaFormat.KEY_AAC_PROFILE,
                     MediaCodecInfo.CodecProfileLevel.AACObjectELD);
             outputFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, desiredOutputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
@@ -235,17 +235,17 @@ class Mp4ComposerEngine {
 
     private static boolean isSupportedByMpeg4(final MediaFormat mediaFormat) {
         switch (mediaFormat.getString(MediaFormat.KEY_MIME)) {
-            case MediaFormatCompat.MIMETYPE_VIDEO_AVC:
-            case MediaFormatCompat.MIMETYPE_VIDEO_HEVC:
+            case MediaFormat.MIMETYPE_VIDEO_AVC:
+            case MediaFormat.MIMETYPE_VIDEO_HEVC:
             // Supported, but worse than AVC so we'll fall back.
-            // case MediaFormatCompat.MIMETYPE_VIDEO_MPEG4:
-            // case MediaFormatCompat.MIMETYPE_VIDEO_MPEG2:
-            // case MediaFormatCompat.MIMETYPE_VIDEO_H263:
+            // case MediaFormat.MIMETYPE_VIDEO_MPEG4:
+            // case MediaFormat.MIMETYPE_VIDEO_MPEG2:
+            // case MediaFormat.MIMETYPE_VIDEO_H263:
                 return true;
-            case MediaFormatCompat.MIMETYPE_AUDIO_AAC:
-            case MediaFormatCompat.MIMETYPE_AUDIO_VORBIS:
-            case MediaFormatCompat.MIMETYPE_AUDIO_MPEG:
-            case MediaFormatCompat.MIMETYPE_AUDIO_AC3:
+            case MediaFormat.MIMETYPE_AUDIO_AAC:
+            case MediaFormat.MIMETYPE_AUDIO_VORBIS:
+            case MediaFormat.MIMETYPE_AUDIO_MPEG:
+            case MediaFormat.MIMETYPE_AUDIO_AC3:
                 return true;
             default:
                 return false;

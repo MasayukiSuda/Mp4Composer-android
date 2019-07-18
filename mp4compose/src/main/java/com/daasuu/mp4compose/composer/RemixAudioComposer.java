@@ -4,8 +4,6 @@ import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 
-import com.daasuu.mp4compose.compat.MediaFormatCompat;
-
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -170,7 +168,7 @@ class RemixAudioComposer implements IAudioComposer {
                     throw new RuntimeException("Audio output format changed twice.");
                 }
                 actualOutputFormat = encoder.getOutputFormat();
-                addPrimingDelay = MediaFormatCompat.MIMETYPE_AUDIO_AAC.equals(actualOutputFormat.getString(MediaFormat.KEY_MIME));
+                addPrimingDelay = MediaFormat.MIMETYPE_AUDIO_AAC.equals(actualOutputFormat.getString(MediaFormat.KEY_MIME));
                 muxer.setOutputFormat(SAMPLE_TYPE, actualOutputFormat);
                 return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
             case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
