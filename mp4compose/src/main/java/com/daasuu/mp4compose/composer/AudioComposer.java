@@ -27,7 +27,6 @@ class AudioComposer implements IAudioComposer {
     private int bufferSize;
     private ByteBuffer buffer;
     private boolean isEOS;
-    private MediaFormat actualOutputFormat;
     private long writtenPresentationTimeUs;
 
     private final long trimStartUs;
@@ -45,7 +44,7 @@ class AudioComposer implements IAudioComposer {
         this.trimEndUs = trimEndMs == -1 ? trimEndMs : TimeUnit.MILLISECONDS.toMicros(trimEndMs);
         this.logger = logger;
 
-        actualOutputFormat = this.mediaExtractor.getTrackFormat(this.trackIndex);
+        final MediaFormat actualOutputFormat = this.mediaExtractor.getTrackFormat(this.trackIndex);
         this.muxRender.setOutputFormat(this.sampleType, actualOutputFormat);
         bufferSize = actualOutputFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE) ? actualOutputFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE) : (64 * 1024);
         buffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder());
@@ -73,7 +72,7 @@ class AudioComposer implements IAudioComposer {
             buffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder());
         }
         boolean isKeyFrame = (mediaExtractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0;
-        int flags = isKeyFrame ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0;
+        int flags = isKeyFrame ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
 
         if (mediaExtractor.getSampleTime() >= trimStartUs && (mediaExtractor.getSampleTime() <= trimEndUs || trimEndUs == -1)) {
             bufferInfo.set(0, sampleSize, mediaExtractor.getSampleTime(), flags);
