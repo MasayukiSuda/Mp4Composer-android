@@ -102,8 +102,7 @@ class Mp4ComposerEngine {
                 audioTrackIndex = 0;
             }
 
-            final MediaFormat desiredVideoOutputFormat = mediaExtractor.getTrackFormat(videoTrackIndex);
-            final MediaFormat actualVideoOutputFormat = correctOutputVideoFormatForAvailableEncoders(desiredVideoOutputFormat, bitrate, outputResolution);
+            final MediaFormat actualVideoOutputFormat = createVideoOutputFormatWithAvailableEncoders(bitrate, outputResolution);
 
             // setup video composer
             videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, actualVideoOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs, logger);
@@ -113,13 +112,13 @@ class Mp4ComposerEngine {
             // setup audio if present and not muted
             if (mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) != null && !mute) {
                 // has Audio video
-                final MediaFormat desiredOutputFormat = mediaExtractor.getTrackFormat(audioTrackIndex);
-                final MediaFormat actualOutputFormat = correctOutputAudioFormatForAvailableEncoders(desiredOutputFormat);
+                final MediaFormat inputMediaFormat = mediaExtractor.getTrackFormat(audioTrackIndex);
+                final MediaFormat outputMediaFormat = createAudioOutputFormat(inputMediaFormat);
 
-                if (timeScale < 2 && actualOutputFormat.equals(desiredOutputFormat)) {
+                if (timeScale < 2 && outputMediaFormat.equals(inputMediaFormat)) {
                     audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender, trimStartMs, trimEndMs, logger);
                 } else {
-                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, actualOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs);
+                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, outputMediaFormat, muxRender, timeScale, trimStartMs, trimEndMs);
                 }
 
                 audioComposer.setup();
@@ -175,82 +174,66 @@ class Mp4ComposerEngine {
     }
 
     @NonNull
-    private MediaFormat correctOutputVideoFormatForAvailableEncoders(final MediaFormat desiredOutputFormat, final int bitrate, final Size outputResolution) {
+    private static MediaFormat createVideoOutputFormatWithAvailableEncoders(final int bitrate,
+                                                                            @NonNull final Size outputResolution) {
         final MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        final String encoderForOutputFormat = mediaCodecList.findEncoderForFormat(desiredOutputFormat);
-        final MediaFormat outputFormat;
 
-        logger.debug(TAG, "Desired video format: " + desiredOutputFormat);
-
-        desiredOutputFormat.setString(MediaFormat.KEY_FRAME_RATE, null);
-        if (encoderForOutputFormat != null && isSupportedByMpeg4(desiredOutputFormat)) {
-            // If we found an encoder, then we can encode to this format.
-            outputFormat = MediaFormat.createVideoFormat(desiredOutputFormat.getString(MediaFormat.KEY_MIME), outputResolution.getWidth(), outputResolution.getHeight());
-            outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-            // Required but ignored by the encoder
-            outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
-            outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-            outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-        } else {
-            // Otherwise, fall back to a format that should be supported, AVC.
-            outputFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, outputResolution.getWidth(), outputResolution.getHeight());
-
-            outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-            // Required but ignored by the encoder
-            outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
-            outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-            outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        final MediaFormat hevcMediaFormat = createVideoFormat(MediaFormat.MIMETYPE_VIDEO_HEVC, bitrate, outputResolution);
+        if (mediaCodecList.findEncoderForFormat(hevcMediaFormat) != null) {
+            return hevcMediaFormat;
         }
 
-        logger.debug(TAG, "Actual video format: " + outputFormat);
-        return outputFormat;
+        final MediaFormat avcMediaFormat = createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, bitrate, outputResolution);
+        if (mediaCodecList.findEncoderForFormat(avcMediaFormat) != null) {
+            return avcMediaFormat;
+        }
+
+        final MediaFormat mp4vesMediaFormat = createVideoFormat(MediaFormat.MIMETYPE_VIDEO_MPEG4, bitrate, outputResolution);
+        if (mediaCodecList.findEncoderForFormat(mp4vesMediaFormat) != null) {
+            return mp4vesMediaFormat;
+        }
+
+        return createVideoFormat(MediaFormat.MIMETYPE_VIDEO_H263, bitrate, outputResolution);
     }
 
     @NonNull
-    private MediaFormat correctOutputAudioFormatForAvailableEncoders(final MediaFormat desiredOutputFormat) {
-        final MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-        final String encoderForOutputFormat = mediaCodecList.findEncoderForFormat(desiredOutputFormat);
-        final MediaFormat outputFormat;
-
-        logger.debug(TAG, "Desired audio format: " + desiredOutputFormat);
-
-        if (encoderForOutputFormat != null && isSupportedByMpeg4(desiredOutputFormat)) {
-            // If we found an encoder, then we can encode to this format.
-            outputFormat = desiredOutputFormat;
+    private static MediaFormat createAudioOutputFormat(@NonNull final MediaFormat inputFormat) {
+        if (MediaFormat.MIMETYPE_AUDIO_AAC.equals(inputFormat.getString(MediaFormat.KEY_MIME))) {
+            return inputFormat;
         } else {
-            // Otherwise, fall back to a format that should be supported, AAC.
-            outputFormat = new MediaFormat();
+            final MediaFormat outputFormat = new MediaFormat();
             outputFormat.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_AAC);
             outputFormat.setInteger(MediaFormat.KEY_AAC_PROFILE,
                     MediaCodecInfo.CodecProfileLevel.AACObjectELD);
-            outputFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, desiredOutputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+            outputFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE,
+                    inputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
             outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, 128000);
-            outputFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, desiredOutputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
-        }
+            outputFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT,
+                    inputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
 
-        logger.debug(TAG, "Actual audio format: " + outputFormat);
+            return outputFormat;
+        }
+    }
+
+    @NonNull
+    private static MediaFormat createVideoFormat(@NonNull final String mimeType,
+                                                 final int bitrate,
+                                                 @NonNull final Size outputResolution) {
+        final MediaFormat outputFormat =
+                MediaFormat.createVideoFormat(mimeType,
+                        outputResolution.getWidth(),
+                        outputResolution.getHeight());
+
+        outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+        // Required but ignored by the encoder
+        outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+        outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+        outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
 
         return outputFormat;
     }
 
-    private static boolean isSupportedByMpeg4(final MediaFormat mediaFormat) {
-        switch (mediaFormat.getString(MediaFormat.KEY_MIME)) {
-            case MediaFormat.MIMETYPE_VIDEO_AVC:
-            case MediaFormat.MIMETYPE_VIDEO_HEVC:
-            // Supported, but worse than AVC so we'll fall back.
-            // case MediaFormat.MIMETYPE_VIDEO_MPEG4:
-            // case MediaFormat.MIMETYPE_VIDEO_MPEG2:
-            // case MediaFormat.MIMETYPE_VIDEO_H263:
-                return true;
-            case MediaFormat.MIMETYPE_AUDIO_AAC:
-            case MediaFormat.MIMETYPE_AUDIO_VORBIS:
-            case MediaFormat.MIMETYPE_AUDIO_MPEG:
-            case MediaFormat.MIMETYPE_AUDIO_AC3:
-                return true;
-            default:
-                return false;
-        }
-    }
 
     private void runPipelines() {
         long loopCount = 0;
