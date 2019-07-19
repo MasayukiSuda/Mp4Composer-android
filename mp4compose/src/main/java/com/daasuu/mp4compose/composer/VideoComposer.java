@@ -15,7 +15,6 @@ import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.logger.Logger;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 // Refer: https://android.googlesource.com/platform/cts/+/lollipop-release/tests/tests/media/src/android/media/cts/ExtractDecodeEditEncodeMuxTest.java
@@ -33,8 +32,6 @@ class VideoComposer {
     private final MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
     private MediaCodec decoder;
     private MediaCodec encoder;
-    private ByteBuffer[] decoderInputBuffers;
-    private ByteBuffer[] encoderOutputBuffers;
     private MediaFormat actualOutputFormat;
     private DecoderSurface decoderSurface;
     private EncoderSurface encoderSurface;
@@ -83,7 +80,6 @@ class VideoComposer {
         encoderSurface.makeCurrent();
         encoder.start();
         encoderStarted = true;
-        encoderOutputBuffers = encoder.getOutputBuffers();
 
         MediaFormat inputFormat = mediaExtractor.getTrackFormat(trackIndex);
         mediaExtractor.seekTo(trimStartUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
@@ -111,7 +107,6 @@ class VideoComposer {
         decoder.configure(inputFormat, decoderSurface.getSurface(), null, 0);
         decoder.start();
         decoderStarted = true;
-        decoderInputBuffers = decoder.getInputBuffers();
     }
 
 
@@ -181,7 +176,7 @@ class VideoComposer {
             decoder.queueInputBuffer(result, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
             return DRAIN_STATE_NONE;
         }
-        int sampleSizeCompat = mediaExtractor.readSampleData(decoderInputBuffers[result], 0);
+        int sampleSizeCompat = mediaExtractor.readSampleData(decoder.getInputBuffer(result), 0);
         boolean isKeyFrame = (mediaExtractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0;
         decoder.queueInputBuffer(result, 0, sampleSizeCompat, mediaExtractor.getSampleTime() / timeScale, isKeyFrame ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0);
         mediaExtractor.advance();
@@ -195,6 +190,7 @@ class VideoComposer {
             case MediaCodec.INFO_TRY_AGAIN_LATER:
                 return DRAIN_STATE_NONE;
             case MediaCodec.INFO_OUTPUT_FORMAT_CHANGED:
+                return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
             case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
                 return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
@@ -233,7 +229,6 @@ class VideoComposer {
                 muxRender.onSetOutputFormat();
                 return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
             case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
-                encoderOutputBuffers = encoder.getOutputBuffers();
                 return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
         if (actualOutputFormat == null) {
@@ -249,7 +244,7 @@ class VideoComposer {
             encoder.releaseOutputBuffer(result, false);
             return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
-        muxRender.writeSampleData(MuxRender.SampleType.VIDEO, encoderOutputBuffers[result], bufferInfo);
+        muxRender.writeSampleData(MuxRender.SampleType.VIDEO, encoder.getOutputBuffer(result), bufferInfo);
         writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
         encoder.releaseOutputBuffer(result, false);
         return DRAIN_STATE_CONSUMED;
