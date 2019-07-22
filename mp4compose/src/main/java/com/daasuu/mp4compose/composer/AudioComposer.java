@@ -48,6 +48,7 @@ class AudioComposer implements IAudioComposer {
         this.muxRender.setOutputFormat(this.sampleType, actualOutputFormat);
         bufferSize = actualOutputFormat.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE) ? actualOutputFormat.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE) : (64 * 1024);
         buffer = ByteBuffer.allocateDirect(bufferSize).order(ByteOrder.nativeOrder());
+        mediaExtractor.seekTo(trimStartUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
     }
 
 
@@ -78,7 +79,8 @@ class AudioComposer implements IAudioComposer {
             bufferInfo.set(0, sampleSize, mediaExtractor.getSampleTime(), flags);
             muxRender.writeSampleData(sampleType, buffer, bufferInfo);
         }
-        writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
+
+        writtenPresentationTimeUs = mediaExtractor.getSampleTime();
         mediaExtractor.advance();
         return true;
     }

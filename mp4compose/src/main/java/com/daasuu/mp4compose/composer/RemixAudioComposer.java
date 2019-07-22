@@ -174,7 +174,7 @@ class RemixAudioComposer implements IAudioComposer {
             throw new RuntimeException("Could not determine actual output format.");
         }
 
-        if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+        if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0 || (bufferInfo.presentationTimeUs > trimEndUs && trimEndUs == -1)) {
             isEncoderEOS = true;
             bufferInfo.set(0, 0, 0, bufferInfo.flags);
         }
