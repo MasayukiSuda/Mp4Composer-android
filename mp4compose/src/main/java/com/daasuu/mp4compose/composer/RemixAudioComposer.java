@@ -123,7 +123,7 @@ class RemixAudioComposer implements IAudioComposer {
 
         final int sampleSize = extractor.readSampleData(decoder.getInputBuffer(result), 0);
         final boolean isKeyFrame = (extractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0;
-        decoder.queueInputBuffer(result, 0, sampleSize, extractor.getSampleTime(), isKeyFrame ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0);
+        decoder.queueInputBuffer(result, 0, sampleSize, extractor.getSampleTime(), isKeyFrame ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0);
         extractor.advance();
         return DRAIN_STATE_CONSUMED;
     }
