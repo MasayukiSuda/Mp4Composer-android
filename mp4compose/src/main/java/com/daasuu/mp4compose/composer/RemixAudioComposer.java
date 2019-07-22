@@ -34,9 +34,6 @@ class RemixAudioComposer implements IAudioComposer {
     private MediaCodec encoder;
     private MediaFormat actualOutputFormat;
 
-    private MediaCodecBufferCompatWrapper decoderBuffers;
-    private MediaCodecBufferCompatWrapper encoderBuffers;
-
     private boolean isExtractorEOS;
     private boolean isDecoderEOS;
     private boolean isEncoderEOS;
@@ -77,7 +74,6 @@ class RemixAudioComposer implements IAudioComposer {
         encoder.configure(outputFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         encoder.start();
         encoderStarted = true;
-        encoderBuffers = new MediaCodecBufferCompatWrapper(encoder);
 
         final MediaFormat inputFormat = extractor.getTrackFormat(trackIndex);
         try {
@@ -88,7 +84,6 @@ class RemixAudioComposer implements IAudioComposer {
         decoder.configure(inputFormat, null, null, 0);
         decoder.start();
         decoderStarted = true;
-        decoderBuffers = new MediaCodecBufferCompatWrapper(decoder);
 
         audioChannel = new AudioChannel(decoder, encoder, outputFormat);
     }
@@ -126,7 +121,7 @@ class RemixAudioComposer implements IAudioComposer {
             return DRAIN_STATE_NONE;
         }
 
-        final int sampleSize = extractor.readSampleData(decoderBuffers.getInputBuffer(result), 0);
+        final int sampleSize = extractor.readSampleData(decoder.getInputBuffer(result), 0);
         final boolean isKeyFrame = (extractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0;
         decoder.queueInputBuffer(result, 0, sampleSize, extractor.getSampleTime(), isKeyFrame ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0);
         extractor.advance();
@@ -172,7 +167,6 @@ class RemixAudioComposer implements IAudioComposer {
                 muxer.setOutputFormat(SAMPLE_TYPE, actualOutputFormat);
                 return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
             case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
-                encoderBuffers = new MediaCodecBufferCompatWrapper(encoder);
                 return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
 
@@ -207,7 +201,7 @@ class RemixAudioComposer implements IAudioComposer {
                 if (!isEncoderEOS) {
                     bufferInfo.presentationTimeUs = bufferInfo.presentationTimeUs - primingDelay;
                 }
-                muxer.writeSampleData(SAMPLE_TYPE, encoderBuffers.getOutputBuffer(result), bufferInfo);
+                muxer.writeSampleData(SAMPLE_TYPE, encoder.getOutputBuffer(result), bufferInfo);
             }
         }
 
