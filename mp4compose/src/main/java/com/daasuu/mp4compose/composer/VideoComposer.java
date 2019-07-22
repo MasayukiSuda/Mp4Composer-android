@@ -210,7 +210,7 @@ class VideoComposer {
             decoderSurface.drawImage();
             encoderSurface.setPresentationTime(bufferInfo.presentationTimeUs * 1000);
             encoderSurface.swapBuffers();
-        } else {
+        } else if (bufferInfo.presentationTimeUs != 0){
             writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
         }
         return DRAIN_STATE_CONSUMED;
