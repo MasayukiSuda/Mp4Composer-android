@@ -60,7 +60,7 @@ public class GlFilter {
 
     private int vertexBufferName;
 
-    private final HashMap<String, Integer> handleMap = new HashMap<String, Integer>();
+    private final HashMap<String, Integer> handleMap = new HashMap<>();
 
     public GlFilter() {
         this(DEFAULT_VERTEX_SHADER, DEFAULT_FRAGMENT_SHADER);
@@ -157,7 +157,7 @@ public class GlFilter {
         if (location == -1) {
             throw new IllegalStateException("Could not get attrib or uniform location for " + name);
         }
-        handleMap.put(name, Integer.valueOf(location));
+        handleMap.put(name, location);
         return location;
     }
 

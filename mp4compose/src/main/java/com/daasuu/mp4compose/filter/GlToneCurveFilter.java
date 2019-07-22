@@ -104,7 +104,7 @@ public class GlToneCurveFilter extends GlFilter {
             int version = readShort(input);
             int totalCurves = readShort(input);
 
-            ArrayList<PointF[]> curves = new ArrayList<PointF[]>(totalCurves);
+            ArrayList<PointF[]> curves = new ArrayList<>(totalCurves);
             float pointRate = 1.0f / 255;
 
             for (int i = 0; i < totalCurves; i++) {
@@ -137,7 +137,7 @@ public class GlToneCurveFilter extends GlFilter {
         }
     }
 
-    private short readShort(InputStream input) throws IOException {
+    private static short readShort(InputStream input) throws IOException {
         return (short) (input.read() << 8 | input.read());
     }
 
@@ -251,7 +251,7 @@ public class GlToneCurveFilter extends GlFilter {
         }
 
         // Prepare the spline points.
-        ArrayList<Float> preparedSplinePoints = new ArrayList<Float>(splinePoints.size());
+        ArrayList<Float> preparedSplinePoints = new ArrayList<>(splinePoints.size());
         for (Point newPoint : splinePoints) {
             Point origPoint = new Point(newPoint.x, newPoint.x);
 
@@ -267,7 +267,7 @@ public class GlToneCurveFilter extends GlFilter {
         return preparedSplinePoints;
     }
 
-    private ArrayList<Point> createSplineCurve2(Point[] points) {
+    private static ArrayList<Point> createSplineCurve2(Point[] points) {
         ArrayList<Double> sdA = createSecondDerivative(points);
 
         // Is [points count] equal to [sdA count]?
@@ -284,7 +284,7 @@ public class GlToneCurveFilter extends GlFilter {
         }
 
 
-        ArrayList<Point> output = new ArrayList<Point>(n + 1);
+        ArrayList<Point> output = new ArrayList<>(n + 1);
 
         for (int i = 0; i < n - 1; i++) {
             Point cur = points[i];
@@ -316,7 +316,7 @@ public class GlToneCurveFilter extends GlFilter {
         return output;
     }
 
-    private ArrayList<Double> createSecondDerivative(Point[] points) {
+    private static ArrayList<Double> createSecondDerivative(Point[] points) {
         int n = points.length;
         if (n <= 1) {
             return null;
@@ -364,7 +364,7 @@ public class GlToneCurveFilter extends GlFilter {
             result[i] -= k * result[i + 1];
         }
 
-        ArrayList<Double> output = new ArrayList<Double>(n);
+        ArrayList<Double> output = new ArrayList<>(n);
         for (int i = 0; i < n; i++) output.add(result[i] / matrix[i][1]);
 
         return output;

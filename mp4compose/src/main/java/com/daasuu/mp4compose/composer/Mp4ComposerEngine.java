@@ -1,17 +1,20 @@
 package com.daasuu.mp4compose.composer;
 
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
-import android.util.Log;
 import android.util.Size;
+
+import androidx.annotation.NonNull;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.filter.GlFilter;
+import com.daasuu.mp4compose.logger.Logger;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -22,7 +25,9 @@ import java.io.IOException;
  * Internal engine, do not use this directly.
  */
 class Mp4ComposerEngine {
+
     private static final String TAG = "Mp4ComposerEngine";
+    private static final String VIDEO_PREFIX = "video/";
     private static final double PROGRESS_UNKNOWN = -1.0;
     private static final long SLEEP_TO_WAIT_TRACK_TRANSCODERS = 10;
     private static final long PROGRESS_INTERVAL_STEPS = 10;
@@ -34,7 +39,11 @@ class Mp4ComposerEngine {
     private ProgressCallback progressCallback;
     private long durationUs;
     private MediaMetadataRetriever mediaMetadataRetriever;
+    private final Logger logger;
 
+    public Mp4ComposerEngine(@NonNull final Logger logger) {
+        this.logger = logger;
+    }
 
     void setDataSource(FileDescriptor fileDescriptor) {
         inputFileDescriptor = fileDescriptor;
@@ -57,7 +66,9 @@ class Mp4ComposerEngine {
             final FillModeCustomItem fillModeCustomItem,
             final int timeScale,
             final boolean flipVertical,
-            final boolean flipHorizontal
+            final boolean flipHorizontal,
+            final long trimStartMs,
+            final long trimEndMs
     ) throws IOException {
 
 
@@ -72,17 +83,9 @@ class Mp4ComposerEngine {
             } catch (NumberFormatException e) {
                 durationUs = -1;
             }
-            Log.d(TAG, "Duration (us): " + durationUs);
+            logger.debug(TAG, "Duration (us): " + durationUs);
 
-            MediaFormat videoOutputFormat = MediaFormat.createVideoFormat("video/avc", outputResolution.getWidth(), outputResolution.getHeight());
-
-            videoOutputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-            videoOutputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
-            videoOutputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-            videoOutputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-
-
-            MuxRender muxRender = new MuxRender(mediaMuxer);
+            MuxRender muxRender = new MuxRender(mediaMuxer, logger);
 
             // identify track indices
             MediaFormat format = mediaExtractor.getTrackFormat(0);
@@ -91,7 +94,7 @@ class Mp4ComposerEngine {
             final int videoTrackIndex;
             final int audioTrackIndex;
 
-            if (mime.startsWith("video/")) {
+            if (mime.startsWith(VIDEO_PREFIX)) {
                 videoTrackIndex = 0;
                 audioTrackIndex = 1;
             } else {
@@ -99,19 +102,23 @@ class Mp4ComposerEngine {
                 audioTrackIndex = 0;
             }
 
+            final MediaFormat actualVideoOutputFormat = createVideoOutputFormatWithAvailableEncoders(bitrate, outputResolution);
+
             // setup video composer
-            videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, videoOutputFormat, muxRender, timeScale);
+            videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, actualVideoOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs, logger);
             videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem, flipVertical, flipHorizontal);
             mediaExtractor.selectTrack(videoTrackIndex);
 
             // setup audio if present and not muted
             if (mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) != null && !mute) {
                 // has Audio video
+                final MediaFormat inputMediaFormat = mediaExtractor.getTrackFormat(audioTrackIndex);
+                final MediaFormat outputMediaFormat = createAudioOutputFormat(inputMediaFormat);
 
-                if (timeScale < 2) {
-                    audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender);
+                if (timeScale < 2 && outputMediaFormat.equals(inputMediaFormat)) {
+                    audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender, trimStartMs, trimEndMs, logger);
                 } else {
-                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, mediaExtractor.getTrackFormat(audioTrackIndex), muxRender, timeScale);
+                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, outputMediaFormat, muxRender, timeScale, trimStartMs, trimEndMs);
                 }
 
                 audioComposer.setup();
@@ -151,7 +158,7 @@ class Mp4ComposerEngine {
                     mediaMuxer = null;
                 }
             } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release mediaMuxer.", e);
+                logger.error(TAG, "Failed to release mediaMuxer.", e);
             }
             try {
                 if (mediaMetadataRetriever != null) {
@@ -159,11 +166,72 @@ class Mp4ComposerEngine {
                     mediaMetadataRetriever = null;
                 }
             } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release mediaMetadataRetriever.", e);
+                logger.error(TAG, "Failed to release mediaMetadataRetriever.", e);
             }
         }
 
 
+    }
+
+    @NonNull
+    private static MediaFormat createVideoOutputFormatWithAvailableEncoders(final int bitrate,
+                                                                            @NonNull final Size outputResolution) {
+        final MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+
+        final MediaFormat hevcMediaFormat = createVideoFormat(MediaFormat.MIMETYPE_VIDEO_HEVC, bitrate, outputResolution);
+        if (mediaCodecList.findEncoderForFormat(hevcMediaFormat) != null) {
+            return hevcMediaFormat;
+        }
+
+        final MediaFormat avcMediaFormat = createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, bitrate, outputResolution);
+        if (mediaCodecList.findEncoderForFormat(avcMediaFormat) != null) {
+            return avcMediaFormat;
+        }
+
+        final MediaFormat mp4vesMediaFormat = createVideoFormat(MediaFormat.MIMETYPE_VIDEO_MPEG4, bitrate, outputResolution);
+        if (mediaCodecList.findEncoderForFormat(mp4vesMediaFormat) != null) {
+            return mp4vesMediaFormat;
+        }
+
+        return createVideoFormat(MediaFormat.MIMETYPE_VIDEO_H263, bitrate, outputResolution);
+    }
+
+    @NonNull
+    private static MediaFormat createAudioOutputFormat(@NonNull final MediaFormat inputFormat) {
+        if (MediaFormat.MIMETYPE_AUDIO_AAC.equals(inputFormat.getString(MediaFormat.KEY_MIME))) {
+            return inputFormat;
+        } else {
+            final MediaFormat outputFormat = new MediaFormat();
+            outputFormat.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_AAC);
+            outputFormat.setInteger(MediaFormat.KEY_AAC_PROFILE,
+                    MediaCodecInfo.CodecProfileLevel.AACObjectELD);
+            outputFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE,
+                    inputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+            outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, 128000);
+            outputFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT,
+                    inputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
+
+            return outputFormat;
+        }
+    }
+
+    @NonNull
+    private static MediaFormat createVideoFormat(@NonNull final String mimeType,
+                                                 final int bitrate,
+                                                 @NonNull final Size outputResolution) {
+        final MediaFormat outputFormat =
+                MediaFormat.createVideoFormat(mimeType,
+                        outputResolution.getWidth(),
+                        outputResolution.getHeight());
+
+        outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+        // Required but ignored by the encoder
+        outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+        outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+        outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+
+        return outputFormat;
     }
 
 
