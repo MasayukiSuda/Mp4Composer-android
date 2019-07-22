@@ -164,10 +164,7 @@ public class Mp4Composer {
                     fileInputStream = new FileInputStream(srcFile);
                 } catch (FileNotFoundException e) {
                     logger.error(TAG, "Unable to find input file", e);
-                    if (listener != null) {
-                        listener.onFailed(e);
-                    }
-                    executorService.shutdown();
+                    notifyListenerOfFailureAndShutdown(e);
                     return;
                 }
 
@@ -175,10 +172,7 @@ public class Mp4Composer {
                     engine.setDataSource(fileInputStream.getFD());
                 } catch (IOException e) {
                     logger.error(TAG, "Unable to read input file", e);
-                    if (listener != null) {
-                        listener.onFailed(e);
-                    }
-                    executorService.shutdown();
+                    notifyListenerOfFailureAndShutdown(e);
                     return;
                 }
 
@@ -186,10 +180,7 @@ public class Mp4Composer {
                 final Size srcVideoResolution = getVideoResolution(srcPath);
 
                 if (srcVideoResolution == null || videoRotate == null) {
-                    if (listener != null) {
-                        listener.onFailed(new UnsupportedOperationException("File type unsupported, path: " + srcPath));
-                    }
-                    executorService.shutdown();
+                    notifyListenerOfFailureAndShutdown(new UnsupportedOperationException("File type unsupported, path: " + srcPath));
                     return;
                 }
 
@@ -253,10 +244,7 @@ public class Mp4Composer {
 
                 } catch (Exception e) {
                     logger.error(TAG, "Unable to compose the engine", e);
-                    if (listener != null) {
-                        listener.onFailed(e);
-                    }
-                    executorService.shutdown();
+                    notifyListenerOfFailureAndShutdown(e);
                     return;
                 }
 
@@ -268,6 +256,13 @@ public class Mp4Composer {
         });
 
         return this;
+    }
+
+    private void notifyListenerOfFailureAndShutdown(final Exception failure) {
+        if (listener != null) {
+            listener.onFailed(failure);
+        }
+        executorService.shutdown();
     }
 
     public void cancel() {
