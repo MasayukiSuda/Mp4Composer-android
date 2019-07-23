@@ -46,7 +46,7 @@ public class Mp4Composer {
 
     private ExecutorService executorService;
 
-    private Logger logger = new AndroidLogger();
+    private Logger logger;
 
 
     public Mp4Composer(final String srcPath, final String destPath) {
@@ -147,6 +147,9 @@ public class Mp4Composer {
         getExecutorService().execute(new Runnable() {
             @Override
             public void run() {
+                if (logger == null) {
+                    logger = new AndroidLogger();
+                }
                 Mp4ComposerEngine engine = new Mp4ComposerEngine(logger);
 
                 engine.setProgressCallback(new Mp4ComposerEngine.ProgressCallback() {
@@ -208,9 +211,6 @@ public class Mp4Composer {
                         }
                     }
                 }
-//                if (filter instanceof IResolutionFilter) {
-//                    ((IResolutionFilter) filter).setResolution(outputResolution);
-//                }
 
                 if (timeScale < 2) {
                     timeScale = 1;
@@ -299,7 +299,7 @@ public class Mp4Composer {
             mediaMetadataRetriever = new MediaMetadataRetriever();
             mediaMetadataRetriever.setDataSource(videoFilePath);
             final String orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
-            if (orientation == null){
+            if (orientation == null) {
                 return null;
             }
             return Integer.valueOf(orientation);
