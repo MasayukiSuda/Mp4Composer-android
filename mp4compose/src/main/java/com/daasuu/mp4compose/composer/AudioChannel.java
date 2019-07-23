@@ -39,9 +39,6 @@ class AudioChannel {
     private int inputChannelCount;
     private int outputChannelCount;
 
-    private final MediaCodecBufferCompatWrapper decoderBuffers;
-    private final MediaCodecBufferCompatWrapper encoderBuffers;
-
     private final AudioBuffer overflowBuffer = new AudioBuffer();
 
     private MediaFormat actualDecodedFormat;
@@ -52,9 +49,6 @@ class AudioChannel {
         this.decoder = decoder;
         this.encoder = encoder;
         this.encodeFormat = encodeFormat;
-
-        decoderBuffers = new MediaCodecBufferCompatWrapper(this.decoder);
-        encoderBuffers = new MediaCodecBufferCompatWrapper(this.encoder);
     }
 
     void setActualDecodedFormat(final MediaFormat decodedFormat) {
@@ -86,7 +80,7 @@ class AudioChannel {
 
         final ByteBuffer data =
                 bufferIndex == BUFFER_INDEX_END_OF_STREAM ?
-                        null : decoderBuffers.getOutputBuffer(bufferIndex);
+                        null : decoder.getOutputBuffer(bufferIndex);
 
         AudioBuffer buffer = emptyBuffers.poll();
         if (buffer == null) {
@@ -122,7 +116,7 @@ class AudioChannel {
         }
 
         // Drain overflow first
-        final ShortBuffer outBuffer = encoderBuffers.getInputBuffer(encoderInBuffIndex).asShortBuffer();
+        final ShortBuffer outBuffer = encoder.getInputBuffer(encoderInBuffIndex).asShortBuffer();
         if (hasOverflow) {
             final long presentationTimeUs = drainOverflow(outBuffer);
             encoder.queueInputBuffer(encoderInBuffIndex,

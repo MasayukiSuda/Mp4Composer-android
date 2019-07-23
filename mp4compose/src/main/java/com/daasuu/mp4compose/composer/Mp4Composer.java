@@ -1,13 +1,17 @@
 package com.daasuu.mp4compose.composer;
 
 import android.media.MediaMetadataRetriever;
-import android.util.Log;
 import android.util.Size;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.filter.GlFilter;
+import com.daasuu.mp4compose.logger.AndroidLogger;
+import com.daasuu.mp4compose.logger.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,8 +41,12 @@ public class Mp4Composer {
     private int timeScale = 1;
     private boolean flipVertical = false;
     private boolean flipHorizontal = false;
+    private long trimStartMs = 0;
+    private long trimEndMs = -1;
 
     private ExecutorService executorService;
+
+    private Logger logger = new AndroidLogger();
 
 
     public Mp4Composer(final String srcPath, final String destPath) {
@@ -103,6 +111,30 @@ public class Mp4Composer {
         return this;
     }
 
+    /**
+     * Set the {@link Logger} that should be used. Defaults to {@link AndroidLogger} if none is set.
+     *
+     * @param logger The logger that should be used to log.
+     * @return The composer instance.
+     */
+    public Mp4Composer logger(@NonNull final Logger logger) {
+        this.logger = logger;
+        return this;
+    }
+
+    /**
+     * Trim the video to the provided times. By default the video will not be trimmed.
+     *
+     * @param trimStartMs The start time of the trim in milliseconds.
+     * @param trimEndMs   The end time of the trim in milliseconds, -1 for no end.
+     * @return The composer instance.
+     */
+    public Mp4Composer trim(final long trimStartMs, final long trimEndMs) {
+        this.trimStartMs = trimStartMs;
+        this.trimEndMs = trimEndMs;
+        return this;
+    }
+
     private ExecutorService getExecutorService() {
         if (executorService == null) {
             executorService = Executors.newSingleThreadExecutor();
@@ -115,7 +147,7 @@ public class Mp4Composer {
         getExecutorService().execute(new Runnable() {
             @Override
             public void run() {
-                Mp4ComposerEngine engine = new Mp4ComposerEngine();
+                Mp4ComposerEngine engine = new Mp4ComposerEngine(logger);
 
                 engine.setProgressCallback(new Mp4ComposerEngine.ProgressCallback() {
                     @Override
@@ -131,25 +163,26 @@ public class Mp4Composer {
                 try {
                     fileInputStream = new FileInputStream(srcFile);
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                    if (listener != null) {
-                        listener.onFailed(e);
-                    }
+                    logger.error(TAG, "Unable to find input file", e);
+                    notifyListenerOfFailureAndShutdown(e);
                     return;
                 }
 
                 try {
                     engine.setDataSource(fileInputStream.getFD());
                 } catch (IOException e) {
-                    e.printStackTrace();
-                    if (listener != null) {
-                        listener.onFailed(e);
-                    }
+                    logger.error(TAG, "Unable to read input file", e);
+                    notifyListenerOfFailureAndShutdown(e);
                     return;
                 }
 
-                final int videoRotate = getVideoRotation(srcPath);
-                final Size srcVideoResolution = getVideoResolution(srcPath, videoRotate);
+                final Integer videoRotate = getVideoRotation(srcPath);
+                final Size srcVideoResolution = getVideoResolution(srcPath);
+
+                if (srcVideoResolution == null || videoRotate == null) {
+                    notifyListenerOfFailureAndShutdown(new UnsupportedOperationException("File type unsupported, path: " + srcPath));
+                    return;
+                }
 
                 if (filter == null) {
                     filter = new GlFilter();
@@ -183,10 +216,10 @@ public class Mp4Composer {
                     timeScale = 1;
                 }
 
-                Log.d(TAG, "rotation = " + (rotation.getRotation() + videoRotate));
-                Log.d(TAG, "inputResolution width = " + srcVideoResolution.getWidth() + " height = " + srcVideoResolution.getHeight());
-                Log.d(TAG, "outputResolution width = " + outputResolution.getWidth() + " height = " + outputResolution.getHeight());
-                Log.d(TAG, "fillMode = " + fillMode);
+                logger.debug(TAG, "rotation = " + (rotation.getRotation() + videoRotate));
+                logger.debug(TAG, "inputResolution width = " + srcVideoResolution.getWidth() + " height = " + srcVideoResolution.getHeight());
+                logger.debug(TAG, "outputResolution width = " + outputResolution.getWidth() + " height = " + outputResolution.getHeight());
+                logger.debug(TAG, "fillMode = " + fillMode);
 
                 try {
                     if (bitrate < 0) {
@@ -204,15 +237,14 @@ public class Mp4Composer {
                             fillModeCustomItem,
                             timeScale,
                             flipVertical,
-                            flipHorizontal
+                            flipHorizontal,
+                            trimStartMs,
+                            trimEndMs
                     );
 
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    if (listener != null) {
-                        listener.onFailed(e);
-                    }
-                    executorService.shutdown();
+                    logger.error(TAG, "Unable to compose the engine", e);
+                    notifyListenerOfFailureAndShutdown(e);
                     return;
                 }
 
@@ -224,6 +256,13 @@ public class Mp4Composer {
         });
 
         return this;
+    }
+
+    private void notifyListenerOfFailureAndShutdown(final Exception failure) {
+        if (listener != null) {
+            listener.onFailed(failure);
+        }
+        executorService.shutdown();
     }
 
     public void cancel() {
@@ -253,21 +292,25 @@ public class Mp4Composer {
         void onFailed(Exception exception);
     }
 
-    private int getVideoRotation(String videoFilePath) {
+    @Nullable
+    private Integer getVideoRotation(String videoFilePath) {
         MediaMetadataRetriever mediaMetadataRetriever = null;
         try {
             mediaMetadataRetriever = new MediaMetadataRetriever();
             mediaMetadataRetriever.setDataSource(videoFilePath);
-            String orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+            final String orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+            if (orientation == null){
+                return null;
+            }
             return Integer.valueOf(orientation);
         } catch (IllegalArgumentException e) {
-            Log.e("MediaMetadataRetriever", "getVideoRotation IllegalArgumentException");
+            logger.error("MediaMetadataRetriever", "getVideoRotation IllegalArgumentException", e);
             return 0;
         } catch (RuntimeException e) {
-            Log.e("MediaMetadataRetriever", "getVideoRotation RuntimeException");
+            logger.error("MediaMetadataRetriever", "getVideoRotation RuntimeException", e);
             return 0;
         } catch (Exception e) {
-            Log.e("MediaMetadataRetriever", "getVideoRotation Exception");
+            logger.error("MediaMetadataRetriever", "getVideoRotation Exception", e);
             return 0;
         } finally {
             try {
@@ -275,24 +318,36 @@ public class Mp4Composer {
                     mediaMetadataRetriever.release();
                 }
             } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release mediaMetadataRetriever.", e);
+                logger.error(TAG, "Failed to release mediaMetadataRetriever.", e);
             }
         }
     }
 
     private int calcBitRate(int width, int height) {
         final int bitrate = (int) (0.25 * 30 * width * height);
-        Log.i(TAG, "bitrate=" + bitrate);
+        logger.debug(TAG, "bitrate=" + bitrate);
         return bitrate;
     }
 
-    private Size getVideoResolution(final String path, final int rotation) {
+    /**
+     * Extract the resolution of the video at the provided path, or null if the format is
+     * unsupported.
+     *
+     * @param path The path of the video.
+     */
+    @Nullable
+    private Size getVideoResolution(final String path) {
         MediaMetadataRetriever retriever = null;
         try {
             retriever = new MediaMetadataRetriever();
             retriever.setDataSource(path);
-            int width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-            int height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+            final String rawWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+            final String rawHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+            if (rawWidth == null || rawHeight == null) {
+                return null;
+            }
+            final int width = Integer.valueOf(rawWidth);
+            final int height = Integer.valueOf(rawHeight);
 
             return new Size(width, height);
         } finally {
@@ -301,7 +356,7 @@ public class Mp4Composer {
                     retriever.release();
                 }
             } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release mediaMetadataRetriever.", e);
+                logger.error(TAG, "Failed to release mediaMetadataRetriever.", e);
             }
         }
     }
