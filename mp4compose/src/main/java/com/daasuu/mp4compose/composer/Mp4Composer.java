@@ -194,6 +194,10 @@ public class Mp4Composer {
                 if (fillMode == null) {
                     fillMode = FillMode.PRESERVE_ASPECT_FIT;
                 }
+                if (fillMode == FillMode.CUSTOM && fillModeCustomItem == null) {
+                    notifyListenerOfFailureAndShutdown(new IllegalAccessException("FillMode.CUSTOM must need fillModeCustomItem."));
+                    return;
+                }
 
                 if (fillModeCustomItem != null) {
                     fillMode = FillMode.CUSTOM;
