@@ -31,7 +31,7 @@ allprojects {
 Step 2. Add the dependency
 ```groovy
 dependencies {
-        implementation 'com.github.MasayukiSuda:Mp4Composer-android:v0.3.0'
+        implementation 'com.github.MasayukiSuda:Mp4Composer-android:v0.3.1'
 }
 ```
 
