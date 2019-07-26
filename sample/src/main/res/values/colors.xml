@@ -3,4 +3,14 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="colorBlack">#000000</color>
+    <color name="colorWhite">#FFFFFF</color>
+
+    <color name="crop_background_gray">#dddddd</color>
+    <color name="crop_background_dark">#444444</color>
+    <color name="crop_background_pink">#ffd3de</color>
+    <color name="crop_background_flesh">#fff1c4</color>
+    <color name="crop_background_green">#e7ffe5</color>
+    <color name="crop_background_blue">#e5efff</color>
+    <color name="crop_background_brown">#d9cebe</color>
 </resources>

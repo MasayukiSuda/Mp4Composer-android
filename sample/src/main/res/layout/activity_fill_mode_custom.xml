@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_crop_change"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlack"
+    tools:context="com.daasuu.sample.FillModeCustomActivity">
+
+    <com.daasuu.sample.widget.PortraitView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:layout_marginTop="68dp"
+        android:layout_marginBottom="68dp"
+        android:background="@drawable/rect_white_drawable" />
+
+    <Button
+        android:id="@+id/btn_codec"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Codec !!" />
+
+    <Button
+        android:id="@+id/btn_color_change"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="color change !!" />
+
+    <Button
+        android:id="@+id/btn_rotate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:text="rotate" />
+
+    <RelativeLayout
+        android:id="@+id/layout_codec"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.8"
+            android:background="@color/colorBlack" />
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:progress="0" />
+
+        <Button
+            android:id="@+id/start_play_movie"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/progress_bar"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="24dp"
+            android:enabled="false"
+            android:text="play movie !!" />
+
+        <Button
+            android:id="@+id/close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/start_play_movie"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="24dp"
+            android:text="close"
+            android:visibility="gone" />
+
+    </RelativeLayout>
+
+</FrameLayout>
