@@ -186,7 +186,7 @@ public class BasicUsageActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailed(Exception exception) {
-                        Log.d(TAG, "onFailed()");
+                        Log.e(TAG, "onFailed() " + exception.getMessage());
                     }
                 })
                 .start();
