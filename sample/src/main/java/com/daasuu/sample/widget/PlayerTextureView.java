@@ -107,4 +107,13 @@ public class PlayerTextureView extends TextureView implements TextureView.Surfac
     public void onRenderedFirstFrame() {
 
     }
+
+    public void play() {
+        player.setPlayWhenReady(true);
+    }
+
+    public void pause() {
+        player.setPlayWhenReady(false);
+    }
+
 }
