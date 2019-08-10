@@ -1,5 +1,6 @@
 package com.daasuu.mp4compose.composer;
 
+import android.media.MediaCodec;
 import android.media.MediaMetadataRetriever;
 import android.util.Size;
 
@@ -247,6 +248,12 @@ public class Mp4Composer {
                     );
 
                 } catch (Exception e) {
+                    if (e instanceof MediaCodec.CodecException) {
+                        logger.error(TAG, "This devicel cannot codec with that setting. Check width, height, bitrate and video format.", e);
+                        notifyListenerOfFailureAndShutdown(e);
+                        return;
+                    }
+
                     logger.error(TAG, "Unable to compose the engine", e);
                     notifyListenerOfFailureAndShutdown(e);
                     return;
