@@ -148,9 +148,7 @@ class Mp4ComposerEngine {
                     mediaExtractor = null;
                 }
             } catch (RuntimeException e) {
-                // Too fatal to make alive the app, because it may leak native resources.
-                //noinspection ThrowFromFinallyBlock
-                throw new Error("Could not shutdown mediaExtractor, codecs and mediaMuxer pipeline.", e);
+                logger.error(TAG, "Could not shutdown mediaExtractor, codecs and mediaMuxer pipeline.", e);
             }
             try {
                 if (mediaMuxer != null) {
