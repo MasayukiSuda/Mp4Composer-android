@@ -21,8 +21,13 @@ public enum Rotation {
     }
 
     public static Rotation fromInt(int rotate) {
+        int calcRotate = rotate;
+        if (calcRotate > 360) {
+            calcRotate -= 360;
+        }
+
         for (Rotation rotation : Rotation.values()) {
-            if (rotate == rotation.getRotation()) return rotation;
+            if (calcRotate == rotation.getRotation()) return rotation;
         }
 
         return NORMAL;

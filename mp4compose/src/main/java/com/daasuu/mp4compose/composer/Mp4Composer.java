@@ -222,6 +222,7 @@ public class Mp4Composer {
                 }
 
                 logger.debug(TAG, "rotation = " + (rotation.getRotation() + videoRotate));
+                logger.debug(TAG, "rotation = " + Rotation.fromInt(rotation.getRotation() + videoRotate));
                 logger.debug(TAG, "inputResolution width = " + srcVideoResolution.getWidth() + " height = " + srcVideoResolution.getHeight());
                 logger.debug(TAG, "outputResolution width = " + outputResolution.getWidth() + " height = " + outputResolution.getHeight());
                 logger.debug(TAG, "fillMode = " + fillMode);
