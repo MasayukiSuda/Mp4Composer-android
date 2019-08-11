@@ -73,7 +73,7 @@ dependencies {
 | method | description |
 |:---|:---|
 | rotation | Rotation of the movie, default Rotation.NORMAL |
-| size | Resolution of the movie, default same resolution of src movie |
+| size | Resolution of the movie, default same resolution of src movie. If you specify a resolution that MediaCodec does not support, an error will occur. |
 | fillMode | Options for scaling the bounds of an movie. PRESERVE_ASPECT_FIT is fit center. PRESERVE_ASPECT_CROP is center crop , default PRESERVE_ASPECT_FIT |
 | filter | This filter is OpenGL Shaders to apply effects on video. Custom filters can be created by inheriting <a href="https://github.com/MasayukiSuda/Mp4Composer-android/blob/master/mp4compose/src/main/java/com/daasuu/mp4compose/filter/GlFilter.java">GlFilter.java</a>. , default GlFilter(No filter). Filters is <a href="https://github.com/MasayukiSuda/Mp4Composer-android/tree/master/mp4compose/src/main/java/com/daasuu/mp4compose/filter">here</a>. |
 | videoBitrate | Set Video Bitrate, default video bitrate is 0.25 * 30 * outputWidth * outputHeight |
