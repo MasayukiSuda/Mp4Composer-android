@@ -74,7 +74,7 @@ dependencies {
 |:---|:---|
 | rotation | Rotation of the movie, default Rotation.NORMAL |
 | size | Resolution of the movie, default same resolution of src movie. If you specify a resolution that MediaCodec does not support, an error will occur. |
-| fillMode | Options for scaling the bounds of an movie. PRESERVE_ASPECT_FIT is fit center. PRESERVE_ASPECT_CROP is center crop , default PRESERVE_ASPECT_FIT |
+| fillMode | Options for scaling the bounds of an movie. PRESERVE_ASPECT_FIT is fit center. PRESERVE_ASPECT_CROP is center crop , default PRESERVE_ASPECT_FIT. <br>FILLMODE_CUSTOM is used to crop a video. Check <a href="https://github.com/MasayukiSuda/Mp4Composer-android/blob/master/art/fillmode_custom.gif">this</a> for behavior. Sample source code is <a href="https://github.com/MasayukiSuda/Mp4Composer-android/blob/master/sample/src/main/java/com/daasuu/sample/FillModeCustomActivity.java">this</a>. |
 | filter | This filter is OpenGL Shaders to apply effects on video. Custom filters can be created by inheriting <a href="https://github.com/MasayukiSuda/Mp4Composer-android/blob/master/mp4compose/src/main/java/com/daasuu/mp4compose/filter/GlFilter.java">GlFilter.java</a>. , default GlFilter(No filter). Filters is <a href="https://github.com/MasayukiSuda/Mp4Composer-android/tree/master/mp4compose/src/main/java/com/daasuu/mp4compose/filter">here</a>. |
 | videoBitrate | Set Video Bitrate, default video bitrate is 0.25 * 30 * outputWidth * outputHeight |
 | mute | Mute audio track on exported video. Default `mute = false`. |
