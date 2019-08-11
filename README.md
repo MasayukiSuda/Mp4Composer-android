@@ -3,7 +3,7 @@
 <img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat">
 [![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
 
-This library generate an Mp4 movie using Android MediaCodec API and apply filter, scale, trim, and rotate Mp4.<br>
+This library generate an Mp4 movie using Android MediaCodec API and apply filter, scale, trim, transcode, crop, mute and rotate Mp4.<br>
 Idea from: [android-transcoder](https://github.com/ypresto/android-transcoder)
 
 <table>
