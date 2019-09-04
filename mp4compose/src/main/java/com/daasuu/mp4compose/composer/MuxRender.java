@@ -6,6 +6,7 @@ import android.media.MediaMuxer;
 
 import androidx.annotation.NonNull;
 
+import com.daasuu.mp4compose.SampleType;
 import com.daasuu.mp4compose.logger.Logger;
 
 import java.nio.ByteBuffer;
@@ -110,8 +111,6 @@ class MuxRender {
                 throw new AssertionError();
         }
     }
-
-    public enum SampleType {VIDEO, AUDIO}
 
     private static class SampleInfo {
         private final SampleType sampleType;

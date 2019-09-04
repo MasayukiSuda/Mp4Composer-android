@@ -7,6 +7,7 @@ import android.media.MediaFormat;
 
 import androidx.annotation.NonNull;
 
+import com.daasuu.mp4compose.SampleType;
 import com.daasuu.mp4compose.logger.Logger;
 
 import java.nio.ByteBuffer;
@@ -22,7 +23,7 @@ class AudioComposer implements IAudioComposer {
     private final MediaExtractor mediaExtractor;
     private final int trackIndex;
     private final MuxRender muxRender;
-    private final MuxRender.SampleType sampleType = MuxRender.SampleType.AUDIO;
+    private final SampleType sampleType = SampleType.AUDIO;
     private final MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
     private int bufferSize;
     private ByteBuffer buffer;

@@ -4,6 +4,8 @@ import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 
+import com.daasuu.mp4compose.SampleType;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
@@ -14,7 +16,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 class RemixAudioComposer implements IAudioComposer {
-    private static final MuxRender.SampleType SAMPLE_TYPE = MuxRender.SampleType.AUDIO;
+    private static final SampleType SAMPLE_TYPE = SampleType.AUDIO;
 
     private static final int DRAIN_STATE_NONE = 0;
     private static final int DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY = 1;

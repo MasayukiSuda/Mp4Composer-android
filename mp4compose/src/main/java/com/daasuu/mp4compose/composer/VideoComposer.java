@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
+import com.daasuu.mp4compose.SampleType;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.logger.Logger;
 
@@ -210,7 +211,7 @@ class VideoComposer {
             decoderSurface.drawImage();
             encoderSurface.setPresentationTime(bufferInfo.presentationTimeUs * 1000);
             encoderSurface.swapBuffers();
-        } else if (bufferInfo.presentationTimeUs != 0){
+        } else if (bufferInfo.presentationTimeUs != 0) {
             writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
         }
         return DRAIN_STATE_CONSUMED;
@@ -227,7 +228,7 @@ class VideoComposer {
                     throw new RuntimeException("Video output format changed twice.");
                 }
                 actualOutputFormat = encoder.getOutputFormat();
-                muxRender.setOutputFormat(MuxRender.SampleType.VIDEO, actualOutputFormat);
+                muxRender.setOutputFormat(SampleType.VIDEO, actualOutputFormat);
                 muxRender.onSetOutputFormat();
                 return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
             case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
@@ -246,7 +247,7 @@ class VideoComposer {
             encoder.releaseOutputBuffer(result, false);
             return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
-        muxRender.writeSampleData(MuxRender.SampleType.VIDEO, encoder.getOutputBuffer(result), bufferInfo);
+        muxRender.writeSampleData(SampleType.VIDEO, encoder.getOutputBuffer(result), bufferInfo);
         writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
         encoder.releaseOutputBuffer(result, false);
         return DRAIN_STATE_CONSUMED;
