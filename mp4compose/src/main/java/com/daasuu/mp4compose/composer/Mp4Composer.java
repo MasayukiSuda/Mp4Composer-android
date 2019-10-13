@@ -74,7 +74,7 @@ public class Mp4Composer {
         this.destPath = destPath;
     }
 
-    public Mp4Composer filter(GlFilter filter) {
+    public Mp4Composer filter(@NonNull GlFilter filter) {
         this.filter = filter;
         return this;
     }
@@ -104,24 +104,24 @@ public class Mp4Composer {
         return this;
     }
 
-    public Mp4Composer rotation(Rotation rotation) {
+    public Mp4Composer rotation(@NonNull Rotation rotation) {
         this.rotation = rotation;
         return this;
     }
 
-    public Mp4Composer fillMode(FillMode fillMode) {
+    public Mp4Composer fillMode(@NonNull FillMode fillMode) {
         this.fillMode = fillMode;
         return this;
     }
 
-    public Mp4Composer customFillMode(FillModeCustomItem fillModeCustomItem) {
+    public Mp4Composer customFillMode(@NonNull FillModeCustomItem fillModeCustomItem) {
         this.fillModeCustomItem = fillModeCustomItem;
         this.fillMode = FillMode.CUSTOM;
         return this;
     }
 
 
-    public Mp4Composer listener(Listener listener) {
+    public Mp4Composer listener(@NonNull Listener listener) {
         this.listener = listener;
         return this;
     }
