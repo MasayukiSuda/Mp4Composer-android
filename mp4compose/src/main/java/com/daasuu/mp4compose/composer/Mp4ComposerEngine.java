@@ -6,6 +6,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.os.Build;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
@@ -17,6 +18,7 @@ import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.logger.Logger;
 import com.daasuu.mp4compose.source.DataSource;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 
 
@@ -52,6 +54,7 @@ class Mp4ComposerEngine {
     void compose(
             final DataSource srcDataSource,
             final String destSrc,
+            final FileDescriptor destFileDescriptor,
             final Size outputResolution,
             final GlFilter filter,
             final int bitrate,
@@ -71,7 +74,11 @@ class Mp4ComposerEngine {
         try {
             mediaExtractor = new MediaExtractor();
             mediaExtractor.setDataSource(srcDataSource.getFileDescriptor());
-            mediaMuxer = new MediaMuxer(destSrc, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            if (Build.VERSION.SDK_INT >= 26 && destSrc == null) {
+                mediaMuxer = new MediaMuxer(destFileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            } else {
+                mediaMuxer = new MediaMuxer(destSrc, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            }
             mediaMetadataRetriever = new MediaMetadataRetriever();
             mediaMetadataRetriever.setDataSource(srcDataSource.getFileDescriptor());
             try {

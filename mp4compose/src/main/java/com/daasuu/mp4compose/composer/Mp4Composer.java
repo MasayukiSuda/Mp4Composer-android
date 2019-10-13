@@ -1,9 +1,11 @@
 package com.daasuu.mp4compose.composer;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
@@ -34,6 +36,7 @@ public class Mp4Composer {
 
     private final DataSource srcDataSource;
     private final String destPath;
+    private FileDescriptor destFileDescriptor;
     private GlFilter filter;
     private Size outputResolution;
     private int bitrate = -1;
@@ -72,6 +75,26 @@ public class Mp4Composer {
     public Mp4Composer(@NonNull final Uri srcUri, @NonNull final String destPath, @NonNull final Context context) {
         this.srcDataSource = new UriDataSource(srcUri, context, logger, errorDataSource);
         this.destPath = destPath;
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    public Mp4Composer(@NonNull final FileDescriptor srcFileDescriptor, @NonNull final FileDescriptor destFileDescriptor) {
+        if (Build.VERSION.SDK_INT < 26) {
+            throw new IllegalArgumentException("destFileDescriptor can not use");
+        }
+        this.srcDataSource = new FileDescriptorDataSource(srcFileDescriptor);
+        this.destPath = null;
+        this.destFileDescriptor = destFileDescriptor;
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    public Mp4Composer(@NonNull final Uri srcUri, @NonNull final FileDescriptor destFileDescriptor, @NonNull final Context context) {
+        if (Build.VERSION.SDK_INT < 26) {
+            throw new IllegalArgumentException("destFileDescriptor can not use");
+        }
+        this.srcDataSource = new UriDataSource(srcUri, context, logger, errorDataSource);
+        this.destPath = null;
+        this.destFileDescriptor = destFileDescriptor;
     }
 
     public Mp4Composer filter(@NonNull GlFilter filter) {
@@ -235,6 +258,7 @@ public class Mp4Composer {
                     engine.compose(
                             srcDataSource,
                             destPath,
+                            destFileDescriptor,
                             outputResolution,
                             filter,
                             bitrate,
