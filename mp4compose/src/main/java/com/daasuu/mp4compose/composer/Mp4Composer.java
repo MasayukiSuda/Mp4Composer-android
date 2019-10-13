@@ -1,7 +1,11 @@
 package com.daasuu.mp4compose.composer;
 
+import android.annotation.TargetApi;
+import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaMetadataRetriever;
+import android.net.Uri;
+import android.os.Build;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
@@ -13,11 +17,12 @@ import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.logger.AndroidLogger;
 import com.daasuu.mp4compose.logger.Logger;
+import com.daasuu.mp4compose.source.DataSource;
+import com.daasuu.mp4compose.source.FileDescriptorDataSource;
+import com.daasuu.mp4compose.source.FilePathDataSource;
+import com.daasuu.mp4compose.source.UriDataSource;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.FileDescriptor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -29,8 +34,9 @@ public class Mp4Composer {
 
     private final static String TAG = Mp4Composer.class.getSimpleName();
 
-    private final String srcPath;
+    private final DataSource srcDataSource;
     private final String destPath;
+    private FileDescriptor destFileDescriptor;
     private GlFilter filter;
     private Size outputResolution;
     private int bitrate = -1;
@@ -49,13 +55,49 @@ public class Mp4Composer {
 
     private Logger logger;
 
+    private DataSource.Listener errorDataSource = new DataSource.Listener() {
+        @Override
+        public void onError(Exception e) {
+            notifyListenerOfFailureAndShutdown(e);
+        }
+    };
 
-    public Mp4Composer(final String srcPath, final String destPath) {
-        this.srcPath = srcPath;
+    public Mp4Composer(@NonNull final String srcPath, @NonNull final String destPath) {
+        this.srcDataSource = new FilePathDataSource(srcPath, logger, errorDataSource);
         this.destPath = destPath;
     }
 
-    public Mp4Composer filter(GlFilter filter) {
+    public Mp4Composer(@NonNull final FileDescriptor srcFileDescriptor, @NonNull final String destPath) {
+        this.srcDataSource = new FileDescriptorDataSource(srcFileDescriptor);
+        this.destPath = destPath;
+    }
+
+    public Mp4Composer(@NonNull final Uri srcUri, @NonNull final String destPath, @NonNull final Context context) {
+        this.srcDataSource = new UriDataSource(srcUri, context, logger, errorDataSource);
+        this.destPath = destPath;
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    public Mp4Composer(@NonNull final FileDescriptor srcFileDescriptor, @NonNull final FileDescriptor destFileDescriptor) {
+        if (Build.VERSION.SDK_INT < 26) {
+            throw new IllegalArgumentException("destFileDescriptor can not use");
+        }
+        this.srcDataSource = new FileDescriptorDataSource(srcFileDescriptor);
+        this.destPath = null;
+        this.destFileDescriptor = destFileDescriptor;
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    public Mp4Composer(@NonNull final Uri srcUri, @NonNull final FileDescriptor destFileDescriptor, @NonNull final Context context) {
+        if (Build.VERSION.SDK_INT < 26) {
+            throw new IllegalArgumentException("destFileDescriptor can not use");
+        }
+        this.srcDataSource = new UriDataSource(srcUri, context, logger, errorDataSource);
+        this.destPath = null;
+        this.destFileDescriptor = destFileDescriptor;
+    }
+
+    public Mp4Composer filter(@NonNull GlFilter filter) {
         this.filter = filter;
         return this;
     }
@@ -85,24 +127,24 @@ public class Mp4Composer {
         return this;
     }
 
-    public Mp4Composer rotation(Rotation rotation) {
+    public Mp4Composer rotation(@NonNull Rotation rotation) {
         this.rotation = rotation;
         return this;
     }
 
-    public Mp4Composer fillMode(FillMode fillMode) {
+    public Mp4Composer fillMode(@NonNull FillMode fillMode) {
         this.fillMode = fillMode;
         return this;
     }
 
-    public Mp4Composer customFillMode(FillModeCustomItem fillModeCustomItem) {
+    public Mp4Composer customFillMode(@NonNull FillModeCustomItem fillModeCustomItem) {
         this.fillModeCustomItem = fillModeCustomItem;
         this.fillMode = FillMode.CUSTOM;
         return this;
     }
 
 
-    public Mp4Composer listener(Listener listener) {
+    public Mp4Composer listener(@NonNull Listener listener) {
         this.listener = listener;
         return this;
     }
@@ -162,29 +204,11 @@ public class Mp4Composer {
                     }
                 });
 
-                final File srcFile = new File(srcPath);
-                final FileInputStream fileInputStream;
-                try {
-                    fileInputStream = new FileInputStream(srcFile);
-                } catch (FileNotFoundException e) {
-                    logger.error(TAG, "Unable to find input file", e);
-                    notifyListenerOfFailureAndShutdown(e);
-                    return;
-                }
-
-                try {
-                    engine.setDataSource(fileInputStream.getFD());
-                } catch (IOException e) {
-                    logger.error(TAG, "Unable to read input file", e);
-                    notifyListenerOfFailureAndShutdown(e);
-                    return;
-                }
-
-                final Integer videoRotate = getVideoRotation(srcPath);
-                final Size srcVideoResolution = getVideoResolution(srcPath);
+                final Integer videoRotate = getVideoRotation(srcDataSource);
+                final Size srcVideoResolution = getVideoResolution(srcDataSource);
 
                 if (srcVideoResolution == null || videoRotate == null) {
-                    notifyListenerOfFailureAndShutdown(new UnsupportedOperationException("File type unsupported, path: " + srcPath));
+                    notifyListenerOfFailureAndShutdown(new UnsupportedOperationException("File type unsupported, path: " + srcDataSource));
                     return;
                 }
 
@@ -232,7 +256,9 @@ public class Mp4Composer {
                         bitrate = calcBitRate(outputResolution.getWidth(), outputResolution.getHeight());
                     }
                     engine.compose(
+                            srcDataSource,
                             destPath,
+                            destFileDescriptor,
                             outputResolution,
                             filter,
                             bitrate,
@@ -274,7 +300,9 @@ public class Mp4Composer {
         if (listener != null) {
             listener.onFailed(failure);
         }
-        executorService.shutdown();
+        if (executorService != null) {
+            executorService.shutdown();
+        }
     }
 
     public void cancel() {
@@ -305,11 +333,11 @@ public class Mp4Composer {
     }
 
     @Nullable
-    private Integer getVideoRotation(String videoFilePath) {
+    private Integer getVideoRotation(DataSource dataSource) {
         MediaMetadataRetriever mediaMetadataRetriever = null;
         try {
             mediaMetadataRetriever = new MediaMetadataRetriever();
-            mediaMetadataRetriever.setDataSource(videoFilePath);
+            mediaMetadataRetriever.setDataSource(dataSource.getFileDescriptor());
             final String orientation = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
             if (orientation == null) {
                 return null;
@@ -344,15 +372,13 @@ public class Mp4Composer {
     /**
      * Extract the resolution of the video at the provided path, or null if the format is
      * unsupported.
-     *
-     * @param path The path of the video.
      */
     @Nullable
-    private Size getVideoResolution(final String path) {
+    private Size getVideoResolution(DataSource dataSource) {
         MediaMetadataRetriever retriever = null;
         try {
             retriever = new MediaMetadataRetriever();
-            retriever.setDataSource(path);
+            retriever.setDataSource(dataSource.getFileDescriptor());
             final String rawWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
             final String rawHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
             if (rawWidth == null || rawHeight == null) {

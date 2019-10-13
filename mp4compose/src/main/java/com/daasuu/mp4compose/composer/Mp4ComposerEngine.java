@@ -6,6 +6,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.os.Build;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
@@ -15,9 +16,11 @@ import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.logger.Logger;
+import com.daasuu.mp4compose.source.DataSource;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
+
 
 // Refer: https://github.com/ypresto/android-transcoder/blob/master/lib/src/main/java/net/ypresto/androidtranscoder/engine/MediaTranscoderEngine.java
 
@@ -31,7 +34,6 @@ class Mp4ComposerEngine {
     private static final double PROGRESS_UNKNOWN = -1.0;
     private static final long SLEEP_TO_WAIT_TRACK_TRANSCODERS = 10;
     private static final long PROGRESS_INTERVAL_STEPS = 10;
-    private FileDescriptor inputFileDescriptor;
     private VideoComposer videoComposer;
     private IAudioComposer audioComposer;
     private MediaExtractor mediaExtractor;
@@ -45,17 +47,14 @@ class Mp4ComposerEngine {
         this.logger = logger;
     }
 
-    void setDataSource(FileDescriptor fileDescriptor) {
-        inputFileDescriptor = fileDescriptor;
-    }
-
     void setProgressCallback(ProgressCallback progressCallback) {
         this.progressCallback = progressCallback;
     }
 
-
     void compose(
-            final String destPath,
+            final DataSource srcDataSource,
+            final String destSrc,
+            final FileDescriptor destFileDescriptor,
             final Size outputResolution,
             final GlFilter filter,
             final int bitrate,
@@ -74,10 +73,14 @@ class Mp4ComposerEngine {
 
         try {
             mediaExtractor = new MediaExtractor();
-            mediaExtractor.setDataSource(inputFileDescriptor);
-            mediaMuxer = new MediaMuxer(destPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            mediaExtractor.setDataSource(srcDataSource.getFileDescriptor());
+            if (Build.VERSION.SDK_INT >= 26 && destSrc == null) {
+                mediaMuxer = new MediaMuxer(destFileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            } else {
+                mediaMuxer = new MediaMuxer(destSrc, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            }
             mediaMetadataRetriever = new MediaMetadataRetriever();
-            mediaMetadataRetriever.setDataSource(inputFileDescriptor);
+            mediaMetadataRetriever.setDataSource(srcDataSource.getFileDescriptor());
             try {
                 durationUs = Long.parseLong(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) * 1000;
             } catch (NumberFormatException e) {
