@@ -176,7 +176,7 @@ class RemixAudioComposer implements IAudioComposer {
             throw new RuntimeException("Could not determine actual output format.");
         }
 
-        if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0 || (bufferInfo.presentationTimeUs > trimEndUs && trimEndUs == -1)) {
+        if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             isEncoderEOS = true;
             bufferInfo.set(0, 0, 0, bufferInfo.flags);
         }
@@ -186,27 +186,16 @@ class RemixAudioComposer implements IAudioComposer {
             return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
 
+        if (muxCount == 1) {
+            muxer.writeSampleData(SAMPLE_TYPE, encoder.getOutputBuffer(result), bufferInfo);
+        }
+        if (muxCount < timeScale) {
+            muxCount++;
+        } else {
+            muxCount = 1;
+        }
+
         writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
-
-        if (frameCounter < 3 && addPrimingDelay) {
-            // For AAC, a priming delay of 2112 samples, ~2 frames should be added.
-            // The audio should be offset by two frames, and the third frame should be at time zero.
-            frameCounter++;
-            primingDelay = bufferInfo.presentationTimeUs;
-        }
-
-        if (muxCount == 1
-                && bufferInfo.presentationTimeUs >= trimStartUs
-                && (bufferInfo.presentationTimeUs <= trimEndUs || trimEndUs == -1)) {
-            if (frameCounter == 3 || !addPrimingDelay) {
-                // For AAC, drop the first two frames.
-                if (!isEncoderEOS) {
-                    bufferInfo.presentationTimeUs = bufferInfo.presentationTimeUs - primingDelay;
-                }
-                muxer.writeSampleData(SAMPLE_TYPE, encoder.getOutputBuffer(result), bufferInfo);
-            }
-        }
-
         encoder.releaseOutputBuffer(result, false);
         return DRAIN_STATE_CONSUMED;
     }
