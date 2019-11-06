@@ -9,10 +9,8 @@ import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.os.Build;
 import android.util.Size;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
@@ -52,7 +50,7 @@ public class Mp4Composer {
     private boolean flipHorizontal = false;
     private long trimStartMs = 0;
     private long trimEndMs = -1;
-    private EGLContext shareContext = EGL14.EGL_NO_CONTEXT;
+    private EGLContext shareContext;
 
     private ExecutorService executorService;
 

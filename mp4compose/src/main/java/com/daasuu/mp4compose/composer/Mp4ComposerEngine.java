@@ -1,17 +1,10 @@
 package com.daasuu.mp4compose.composer;
 
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
-import android.media.MediaMetadataRetriever;
-import android.media.MediaMuxer;
+import android.media.*;
 import android.opengl.EGLContext;
 import android.os.Build;
 import android.util.Size;
-
 import androidx.annotation.NonNull;
-
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
@@ -44,7 +37,7 @@ class Mp4ComposerEngine {
     private MediaMetadataRetriever mediaMetadataRetriever;
     private final Logger logger;
 
-    public Mp4ComposerEngine(@NonNull final Logger logger) {
+    Mp4ComposerEngine(@NonNull final Logger logger) {
         this.logger = logger;
     }
 
