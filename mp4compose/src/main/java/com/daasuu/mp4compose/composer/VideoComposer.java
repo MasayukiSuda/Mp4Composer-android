@@ -4,6 +4,7 @@ package com.daasuu.mp4compose.composer;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.opengl.EGLContext;
 import android.util.Size;
 
 import androidx.annotation.NonNull;
@@ -69,7 +70,8 @@ class VideoComposer {
                FillMode fillMode,
                FillModeCustomItem fillModeCustomItem,
                final boolean flipVertical,
-               final boolean flipHorizontal) {
+               final boolean flipHorizontal,
+               final EGLContext shareContext) {
         mediaExtractor.selectTrack(trackIndex);
         try {
             encoder = MediaCodec.createEncoderByType(outputFormat.getString(MediaFormat.KEY_MIME));
@@ -77,7 +79,7 @@ class VideoComposer {
             throw new IllegalStateException(e);
         }
         encoder.configure(outputFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        encoderSurface = new EncoderSurface(encoder.createInputSurface());
+        encoderSurface = new EncoderSurface(encoder.createInputSurface(), shareContext);
         encoderSurface.makeCurrent();
         encoder.start();
         encoderStarted = true;

@@ -5,6 +5,8 @@ import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.opengl.EGL14;
+import android.opengl.EGLContext;
 import android.os.Build;
 import android.util.Size;
 
@@ -50,6 +52,7 @@ public class Mp4Composer {
     private boolean flipHorizontal = false;
     private long trimStartMs = 0;
     private long trimEndMs = -1;
+    private EGLContext shareContext = EGL14.EGL_NO_CONTEXT;
 
     private ExecutorService executorService;
 
@@ -178,6 +181,11 @@ public class Mp4Composer {
         return this;
     }
 
+    public Mp4Composer shareContext(@NonNull EGLContext shareContext) {
+        this.shareContext = shareContext;
+        return this;
+    }
+
     private ExecutorService getExecutorService() {
         if (executorService == null) {
             executorService = Executors.newSingleThreadExecutor();
@@ -245,6 +253,10 @@ public class Mp4Composer {
                     timeScale = 1;
                 }
 
+                if (shareContext == null) {
+                    shareContext = EGL14.EGL_NO_CONTEXT;
+                }
+
                 logger.debug(TAG, "rotation = " + (rotation.getRotation() + videoRotate));
                 logger.debug(TAG, "rotation = " + Rotation.fromInt(rotation.getRotation() + videoRotate));
                 logger.debug(TAG, "inputResolution width = " + srcVideoResolution.getWidth() + " height = " + srcVideoResolution.getHeight());
@@ -271,7 +283,8 @@ public class Mp4Composer {
                             flipVertical,
                             flipHorizontal,
                             trimStartMs,
-                            trimEndMs
+                            trimEndMs,
+                            shareContext
                     );
 
                 } catch (Exception e) {
