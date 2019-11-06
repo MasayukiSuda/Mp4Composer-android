@@ -6,6 +6,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.opengl.EGLContext;
 import android.os.Build;
 import android.util.Size;
 
@@ -67,7 +68,8 @@ class Mp4ComposerEngine {
             final boolean flipVertical,
             final boolean flipHorizontal,
             final long trimStartMs,
-            final long trimEndMs
+            final long trimEndMs,
+            final EGLContext shareContext
     ) throws IOException {
 
 
@@ -109,7 +111,7 @@ class Mp4ComposerEngine {
 
             // setup video composer
             videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, actualVideoOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs, logger);
-            videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem, flipVertical, flipHorizontal);
+            videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem, flipVertical, flipHorizontal, shareContext);
             mediaExtractor.selectTrack(videoTrackIndex);
 
             // setup audio if present and not muted

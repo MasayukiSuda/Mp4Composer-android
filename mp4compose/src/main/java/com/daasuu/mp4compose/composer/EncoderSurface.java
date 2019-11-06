@@ -28,18 +28,18 @@ class EncoderSurface {
     /**
      * Creates an EncoderSurface from a Surface.
      */
-    EncoderSurface(Surface surface) {
+    EncoderSurface(Surface surface, EGLContext shareContext) {
         if (surface == null) {
             throw new NullPointerException();
         }
         this.surface = surface;
-        eglSetup();
+        eglSetup(shareContext);
     }
 
     /**
      * Prepares EGL.  We want a GLES 2.0 context and a surface that supports recording.
      */
-    private void eglSetup() {
+    private void eglSetup(EGLContext shareContext) {
         eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         if (eglDisplay == EGL14.EGL_NO_DISPLAY) {
             throw new RuntimeException("unable to get EGL14 display");
@@ -70,7 +70,7 @@ class EncoderSurface {
                 EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
                 EGL14.EGL_NONE
         };
-        eglContext = EGL14.eglCreateContext(eglDisplay, configs[0], EGL14.EGL_NO_CONTEXT,
+        eglContext = EGL14.eglCreateContext(eglDisplay, configs[0], shareContext != null ? shareContext : EGL14.EGL_NO_CONTEXT,
                 attrib_list, 0);
         checkEglError("eglCreateContext");
         if (eglContext == null) {
