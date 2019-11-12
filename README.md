@@ -95,6 +95,7 @@ dependencies {
 
 ## Sample Dependencies
 * [glide](https://github.com/bumptech/glide)
+* [ExoPlayer](https://github.com/google/ExoPlayer)
 
 
 ## License
