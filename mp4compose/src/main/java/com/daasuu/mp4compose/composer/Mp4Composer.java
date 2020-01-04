@@ -399,6 +399,15 @@ public class Mp4Composer {
             final int height = Integer.valueOf(rawHeight);
 
             return new Size(width, height);
+        } catch (IllegalArgumentException e) {
+            logger.error("MediaMetadataRetriever", "getVideoResolution IllegalArgumentException", e);
+            return null;
+        } catch (RuntimeException e) {
+            logger.error("MediaMetadataRetriever", "getVideoResolution RuntimeException", e);
+            return null;
+        } catch (Exception e) {
+            logger.error("MediaMetadataRetriever", "getVideoResolution Exception", e);
+            return null;
         } finally {
             try {
                 if (retriever != null) {
