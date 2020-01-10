@@ -3,6 +3,7 @@ package com.daasuu.mp4compose.composer;
 import android.media.*;
 import android.opengl.EGLContext;
 import android.os.Build;
+import android.text.TextUtils;
 import android.util.Size;
 import androidx.annotation.NonNull;
 import com.daasuu.mp4compose.FillMode;
@@ -62,6 +63,7 @@ class Mp4ComposerEngine {
             final boolean flipHorizontal,
             final long trimStartMs,
             final long trimEndMs,
+            final String videoFormatMimeType,
             final EGLContext shareContext
     ) throws IOException {
 
@@ -100,7 +102,7 @@ class Mp4ComposerEngine {
                 audioTrackIndex = 0;
             }
 
-            final MediaFormat actualVideoOutputFormat = createVideoOutputFormatWithAvailableEncoders(bitrate, outputResolution);
+            final MediaFormat actualVideoOutputFormat = createVideoOutputFormatWithAvailableEncoders(videoFormatMimeType, bitrate, outputResolution);
 
             // setup video composer
             videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, actualVideoOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs, logger);
@@ -170,9 +172,17 @@ class Mp4ComposerEngine {
     }
 
     @NonNull
-    private static MediaFormat createVideoOutputFormatWithAvailableEncoders(final int bitrate,
+    private static MediaFormat createVideoOutputFormatWithAvailableEncoders(final String mimeType,
+                                                                            final int bitrate,
                                                                             @NonNull final Size outputResolution) {
         final MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+
+        if (!TextUtils.isEmpty(mimeType)) {
+            final MediaFormat mediaFormat = createVideoFormat(mimeType, bitrate, outputResolution);
+            if (mediaCodecList.findEncoderForFormat(mediaFormat) != null) {
+                return mediaFormat;
+            }
+        }
 
         final MediaFormat hevcMediaFormat = createVideoFormat(MediaFormat.MIMETYPE_VIDEO_HEVC, bitrate, outputResolution);
         if (mediaCodecList.findEncoderForFormat(hevcMediaFormat) != null) {

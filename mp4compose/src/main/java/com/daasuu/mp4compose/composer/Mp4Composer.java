@@ -50,6 +50,7 @@ public class Mp4Composer {
     private boolean flipHorizontal = false;
     private long trimStartMs = 0;
     private long trimEndMs = -1;
+    private String videoFormatMimeType;
     private EGLContext shareContext;
 
     private ExecutorService executorService;
@@ -152,6 +153,11 @@ public class Mp4Composer {
 
     public Mp4Composer timeScale(final int timeScale) {
         this.timeScale = timeScale;
+        return this;
+    }
+
+    public Mp4Composer videoFormatMimeType(String videoFormatMimeType) {
+        this.videoFormatMimeType = videoFormatMimeType;
         return this;
     }
 
@@ -282,6 +288,7 @@ public class Mp4Composer {
                             flipHorizontal,
                             trimStartMs,
                             trimEndMs,
+                            videoFormatMimeType,
                             shareContext
                     );
 
