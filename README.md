@@ -81,6 +81,7 @@ dependencies {
 | trim | Trim both audio and video tracks to the provided start and end times, inclusive. Default does not trim anything from the start or end. |
 | flipVertical | Flip Vertical on exported video. Default `flipVertical = false`. |
 | flipHorizontal | Flip Horizontal on exported video. Default `flipHorizontal = false`. |
+| videoFormatMimeType | The mime type of the video format on exported video. Values can be MediaFormat.MIMETYPE_VIDEO_HEVC, MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263, etc. |
 
 
 
