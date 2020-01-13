@@ -3,12 +3,12 @@ package com.daasuu.mp4compose.composer;
 import android.media.*;
 import android.opengl.EGLContext;
 import android.os.Build;
-import android.text.TextUtils;
 import android.util.Size;
 import androidx.annotation.NonNull;
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
+import com.daasuu.mp4compose.VideoFormatMimeType;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.logger.Logger;
 import com.daasuu.mp4compose.source.DataSource;
@@ -63,7 +63,7 @@ class Mp4ComposerEngine {
             final boolean flipHorizontal,
             final long trimStartMs,
             final long trimEndMs,
-            final String videoFormatMimeType,
+            final VideoFormatMimeType videoFormatMimeType,
             final EGLContext shareContext
     ) throws IOException {
 
@@ -172,34 +172,34 @@ class Mp4ComposerEngine {
     }
 
     @NonNull
-    private static MediaFormat createVideoOutputFormatWithAvailableEncoders(final String mimeType,
+    private static MediaFormat createVideoOutputFormatWithAvailableEncoders(@NonNull final VideoFormatMimeType mimeType,
                                                                             final int bitrate,
                                                                             @NonNull final Size outputResolution) {
         final MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
 
-        if (!TextUtils.isEmpty(mimeType)) {
-            final MediaFormat mediaFormat = createVideoFormat(mimeType, bitrate, outputResolution);
+        if (mimeType != VideoFormatMimeType.AUTO) {
+            final MediaFormat mediaFormat = createVideoFormat(mimeType.getFormat(), bitrate, outputResolution);
             if (mediaCodecList.findEncoderForFormat(mediaFormat) != null) {
                 return mediaFormat;
             }
         }
 
-        final MediaFormat hevcMediaFormat = createVideoFormat(MediaFormat.MIMETYPE_VIDEO_HEVC, bitrate, outputResolution);
+        final MediaFormat hevcMediaFormat = createVideoFormat(VideoFormatMimeType.HEVC.getFormat(), bitrate, outputResolution);
         if (mediaCodecList.findEncoderForFormat(hevcMediaFormat) != null) {
             return hevcMediaFormat;
         }
 
-        final MediaFormat avcMediaFormat = createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, bitrate, outputResolution);
+        final MediaFormat avcMediaFormat = createVideoFormat(VideoFormatMimeType.AVC.getFormat(), bitrate, outputResolution);
         if (mediaCodecList.findEncoderForFormat(avcMediaFormat) != null) {
             return avcMediaFormat;
         }
 
-        final MediaFormat mp4vesMediaFormat = createVideoFormat(MediaFormat.MIMETYPE_VIDEO_MPEG4, bitrate, outputResolution);
+        final MediaFormat mp4vesMediaFormat = createVideoFormat(VideoFormatMimeType.MPEG4.getFormat(), bitrate, outputResolution);
         if (mediaCodecList.findEncoderForFormat(mp4vesMediaFormat) != null) {
             return mp4vesMediaFormat;
         }
 
-        return createVideoFormat(MediaFormat.MIMETYPE_VIDEO_H263, bitrate, outputResolution);
+        return createVideoFormat(VideoFormatMimeType.H263.getFormat(), bitrate, outputResolution);
     }
 
     @NonNull

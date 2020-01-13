@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
+import com.daasuu.mp4compose.VideoFormatMimeType;
 import com.daasuu.mp4compose.filter.GlFilter;
 import com.daasuu.mp4compose.logger.AndroidLogger;
 import com.daasuu.mp4compose.logger.Logger;
@@ -50,7 +51,7 @@ public class Mp4Composer {
     private boolean flipHorizontal = false;
     private long trimStartMs = 0;
     private long trimEndMs = -1;
-    private String videoFormatMimeType;
+    private VideoFormatMimeType videoFormatMimeType = VideoFormatMimeType.AUTO;
     private EGLContext shareContext;
 
     private ExecutorService executorService;
@@ -156,7 +157,7 @@ public class Mp4Composer {
         return this;
     }
 
-    public Mp4Composer videoFormatMimeType(String videoFormatMimeType) {
+    public Mp4Composer videoFormatMimeType(@NonNull VideoFormatMimeType videoFormatMimeType) {
         this.videoFormatMimeType = videoFormatMimeType;
         return this;
     }
