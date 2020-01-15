@@ -103,6 +103,10 @@ class Mp4ComposerEngine {
             }
 
             final MediaFormat actualVideoOutputFormat = createVideoOutputFormatWithAvailableEncoders(videoFormatMimeType, bitrate, outputResolution);
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.LOLLIPOP) {
+                // Only LOLLIPOP sets KEY_FRAME_RATE here.
+                actualVideoOutputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+            }
 
             // setup video composer
             videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, actualVideoOutputFormat, muxRender, timeScale, trimStartMs, trimEndMs, logger);
@@ -231,8 +235,12 @@ class Mp4ComposerEngine {
                         outputResolution.getHeight());
 
         outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-        // Required but ignored by the encoder
-        outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+        // On Build.VERSION_CODES.LOLLIPOP, format must not contain a MediaFormat#KEY_FRAME_RATE.
+        // https://developer.android.com/reference/android/media/MediaCodecInfo.CodecCapabilities.html#isFormatSupported(android.media.MediaFormat)
+        if (Build.VERSION.SDK_INT != Build.VERSION_CODES.LOLLIPOP) {
+            // Required but ignored by the encoder
+            outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+        }
         outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
         outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                 MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
