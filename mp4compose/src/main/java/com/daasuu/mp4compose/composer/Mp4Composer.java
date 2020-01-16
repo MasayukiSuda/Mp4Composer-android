@@ -66,6 +66,11 @@ public class Mp4Composer {
     };
 
     public Mp4Composer(@NonNull final String srcPath, @NonNull final String destPath) {
+        this(srcPath, destPath, new AndroidLogger());
+    }
+
+    public Mp4Composer(@NonNull final String srcPath, @NonNull final String destPath, @NonNull final Logger logger) {
+        this.logger = logger;
         this.srcDataSource = new FilePathDataSource(srcPath, logger, errorDataSource);
         this.destPath = destPath;
     }
@@ -76,6 +81,11 @@ public class Mp4Composer {
     }
 
     public Mp4Composer(@NonNull final Uri srcUri, @NonNull final String destPath, @NonNull final Context context) {
+        this(srcUri, destPath, context, new AndroidLogger());
+    }
+
+    public Mp4Composer(@NonNull final Uri srcUri, @NonNull final String destPath, @NonNull final Context context, @NonNull final Logger logger) {
+        this.logger = logger;
         this.srcDataSource = new UriDataSource(srcUri, context, logger, errorDataSource);
         this.destPath = destPath;
     }
@@ -92,9 +102,15 @@ public class Mp4Composer {
 
     @TargetApi(Build.VERSION_CODES.O)
     public Mp4Composer(@NonNull final Uri srcUri, @NonNull final FileDescriptor destFileDescriptor, @NonNull final Context context) {
+        this(srcUri, destFileDescriptor, context, new AndroidLogger());
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    public Mp4Composer(@NonNull final Uri srcUri, @NonNull final FileDescriptor destFileDescriptor, @NonNull final Context context, @NonNull final Logger logger) {
         if (Build.VERSION.SDK_INT < 26) {
             throw new IllegalArgumentException("destFileDescriptor can not use");
         }
+        this.logger = logger;
         this.srcDataSource = new UriDataSource(srcUri, context, logger, errorDataSource);
         this.destPath = null;
         this.destFileDescriptor = destFileDescriptor;
