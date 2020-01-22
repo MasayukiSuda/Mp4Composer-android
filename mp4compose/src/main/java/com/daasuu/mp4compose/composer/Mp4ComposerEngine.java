@@ -36,6 +36,7 @@ class Mp4ComposerEngine {
     private ProgressCallback progressCallback;
     private long durationUs;
     private MediaMetadataRetriever mediaMetadataRetriever;
+    private volatile boolean canceled;
     private final Logger logger;
 
     Mp4ComposerEngine(@NonNull final Logger logger) {
@@ -171,8 +172,14 @@ class Mp4ComposerEngine {
                 logger.error(TAG, "Failed to release mediaMetadataRetriever.", e);
             }
         }
+    }
 
+    void cancel() {
+        canceled = true;
+    }
 
+    boolean isCanceled() {
+        return canceled;
     }
 
     @NonNull
@@ -256,7 +263,7 @@ class Mp4ComposerEngine {
                 progressCallback.onProgress(PROGRESS_UNKNOWN);
             }// unknown
         }
-        while (!(videoComposer.isFinished() && audioComposer.isFinished())) {
+        while (!canceled && !(videoComposer.isFinished() && audioComposer.isFinished())) {
             boolean stepped = videoComposer.stepPipeline()
                     || audioComposer.stepPipeline();
             loopCount++;
@@ -285,7 +292,7 @@ class Mp4ComposerEngine {
                 progressCallback.onProgress(PROGRESS_UNKNOWN);
             } // unknown
         }
-        while (!videoComposer.isFinished()) {
+        while (!canceled && !videoComposer.isFinished()) {
             boolean stepped = videoComposer.stepPipeline();
             loopCount++;
             if (durationUs > 0 && loopCount % PROGRESS_INTERVAL_STEPS == 0) {

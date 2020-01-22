@@ -55,6 +55,7 @@ public class Mp4Composer {
     private EGLContext shareContext;
 
     private ExecutorService executorService;
+    private Mp4ComposerEngine engine;
 
     private Logger logger;
 
@@ -200,13 +201,18 @@ public class Mp4Composer {
 
 
     public Mp4Composer start() {
+        //if we're already composing, calling this should do nothing
+        if (engine != null) {
+            return this;
+        }
+
         getExecutorService().execute(new Runnable() {
             @Override
             public void run() {
                 if (logger == null) {
                     logger = new AndroidLogger();
                 }
-                Mp4ComposerEngine engine = new Mp4ComposerEngine(logger);
+                engine = new Mp4ComposerEngine(logger);
 
                 engine.setProgressCallback(new Mp4ComposerEngine.ProgressCallback() {
                     @Override
@@ -306,9 +312,14 @@ public class Mp4Composer {
                 }
 
                 if (listener != null) {
-                    listener.onCompleted();
+                    if (engine.isCanceled()) {
+                        listener.onCanceled();
+                    } else {
+                        listener.onCompleted();
+                    }
                 }
                 executorService.shutdown();
+                engine = null;
             }
         });
 
@@ -325,7 +336,9 @@ public class Mp4Composer {
     }
 
     public void cancel() {
-        getExecutorService().shutdownNow();
+        if (engine != null) {
+            engine.cancel();
+        }
     }
 
 
