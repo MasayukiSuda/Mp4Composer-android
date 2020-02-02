@@ -6,9 +6,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.opengl.EGLContext;
 import android.util.Size;
-
 import androidx.annotation.NonNull;
-
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.FillModeCustomItem;
 import com.daasuu.mp4compose.Rotation;
@@ -136,7 +134,7 @@ class VideoComposer {
 
 
     long getWrittenPresentationTimeUs() {
-        return writtenPresentationTimeUs;
+        return writtenPresentationTimeUs * timeScale;
     }
 
 
