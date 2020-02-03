@@ -11,13 +11,7 @@ import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.Toast;
-
+import android.widget.*;
 import com.daasuu.mp4compose.FillMode;
 import com.daasuu.mp4compose.composer.Mp4Composer;
 import com.daasuu.mp4compose.filter.GlFilter;
@@ -158,6 +152,8 @@ public class BasicUsageActivity extends AppCompatActivity {
                 .fillMode(FillMode.PRESERVE_ASPECT_FIT)
                 .filter(glFilter)
                 .mute(muteCheckBox.isChecked())
+                //.timeScale(3)
+                //.trim(2000, 50000)
                 .flipHorizontal(flipHorizontalCheckBox.isChecked())
                 .flipVertical(flipVerticalCheckBox.isChecked())
                 .listener(new Mp4Composer.Listener() {

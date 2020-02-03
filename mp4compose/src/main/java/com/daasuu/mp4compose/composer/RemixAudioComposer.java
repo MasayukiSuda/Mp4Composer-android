@@ -3,7 +3,6 @@ package com.daasuu.mp4compose.composer;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-
 import com.daasuu.mp4compose.SampleType;
 
 import java.io.IOException;
@@ -27,7 +26,7 @@ class RemixAudioComposer implements IAudioComposer {
     private long writtenPresentationTimeUs;
 
     private final int trackIndex;
-    private int muxCount = 1;
+    private int muxCount = 0;
 
     private final MediaFormat outputFormat;
 
@@ -53,9 +52,9 @@ class RemixAudioComposer implements IAudioComposer {
     private int frameCounter;
     private long primingDelay;
 
-    public RemixAudioComposer(MediaExtractor extractor, int trackIndex,
-                              MediaFormat outputFormat, MuxRender muxer, int timeScale,
-                              long trimStartMs, long trimEndMs) {
+    RemixAudioComposer(MediaExtractor extractor, int trackIndex,
+                       MediaFormat outputFormat, MuxRender muxer, int timeScale,
+                       long trimStartMs, long trimEndMs) {
         this.extractor = extractor;
         this.trackIndex = trackIndex;
         this.outputFormat = outputFormat;
@@ -147,7 +146,7 @@ class RemixAudioComposer implements IAudioComposer {
             isDecoderEOS = true;
             audioChannel.drainDecoderBufferAndQueue(AudioChannel.BUFFER_INDEX_END_OF_STREAM, 0);
         } else if (bufferInfo.size > 0) {
-            audioChannel.drainDecoderBufferAndQueue(result, bufferInfo.presentationTimeUs / timeScale);
+            audioChannel.drainDecoderBufferAndQueue(result, bufferInfo.presentationTimeUs);
         }
 
         return DRAIN_STATE_CONSUMED;
@@ -186,16 +185,17 @@ class RemixAudioComposer implements IAudioComposer {
             return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
 
-        if (muxCount == 1) {
+        if (muxCount == 0) {
+            bufferInfo.presentationTimeUs = bufferInfo.presentationTimeUs / timeScale;
             muxer.writeSampleData(SAMPLE_TYPE, encoder.getOutputBuffer(result), bufferInfo);
+            writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
         }
         if (muxCount < timeScale) {
             muxCount++;
         } else {
-            muxCount = 1;
+            muxCount = 0;
         }
 
-        writtenPresentationTimeUs = bufferInfo.presentationTimeUs;
         encoder.releaseOutputBuffer(result, false);
         return DRAIN_STATE_CONSUMED;
     }
@@ -203,7 +203,7 @@ class RemixAudioComposer implements IAudioComposer {
 
     @Override
     public long getWrittenPresentationTimeUs() {
-        return writtenPresentationTimeUs;
+        return writtenPresentationTimeUs * timeScale;
     }
 
     @Override

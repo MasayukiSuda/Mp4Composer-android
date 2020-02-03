@@ -25,6 +25,7 @@ import java.io.IOException;
 class Mp4ComposerEngine {
 
     private static final String TAG = "Mp4ComposerEngine";
+    private static final String AUDIO_PREFIX = "audio/";
     private static final String VIDEO_PREFIX = "video/";
     private static final double PROGRESS_UNKNOWN = -1.0;
     private static final long SLEEP_TO_WAIT_TRACK_TRANSCODERS = 10;
@@ -89,18 +90,17 @@ class Mp4ComposerEngine {
             MuxRender muxRender = new MuxRender(mediaMuxer, logger);
 
             // identify track indices
-            MediaFormat format = mediaExtractor.getTrackFormat(0);
-            String mime = format.getString(MediaFormat.KEY_MIME);
-
-            final int videoTrackIndex;
-            final int audioTrackIndex;
-
-            if (mime.startsWith(VIDEO_PREFIX)) {
-                videoTrackIndex = 0;
-                audioTrackIndex = 1;
-            } else {
-                videoTrackIndex = 1;
-                audioTrackIndex = 0;
+            int videoTrackIndex = -1;
+            int audioTrackIndex = -1;
+            for (int i = 0; i < mediaExtractor.getTrackCount(); i++) {
+                MediaFormat mediaFormat = mediaExtractor.getTrackFormat(i);
+                String mimeType = mediaFormat.getString(MediaFormat.KEY_MIME);
+                if (mimeType == null) continue;
+                if (mimeType.startsWith(VIDEO_PREFIX)) {
+                    videoTrackIndex = i;
+                } else if (mimeType.startsWith(AUDIO_PREFIX)) {
+                    audioTrackIndex = i;
+                }
             }
 
             final MediaFormat actualVideoOutputFormat = createVideoOutputFormatWithAvailableEncoders(videoFormatMimeType, bitrate, outputResolution);
@@ -115,7 +115,7 @@ class Mp4ComposerEngine {
             mediaExtractor.selectTrack(videoTrackIndex);
 
             // setup audio if present and not muted
-            if (mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) != null && !mute) {
+            if (audioTrackIndex >= 0 && mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) != null && !mute) {
                 // has Audio video
                 final MediaFormat inputMediaFormat = mediaExtractor.getTrackFormat(audioTrackIndex);
                 final MediaFormat outputMediaFormat = createAudioOutputFormat(inputMediaFormat);
