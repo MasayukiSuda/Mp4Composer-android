@@ -2,6 +2,7 @@ package com.daasuu.mp4compose;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.view.View;
 
 /**
  * Created by sudamasayuki2 on 2018/01/08.
@@ -24,6 +25,18 @@ public class FillModeCustomItem implements Parcelable {
         this.videoHeight = videoHeight;
     }
 
+    public FillModeCustomItem(View view, float startWidthSize, float videoWidth, float videoHeight) {
+        int minSide = Math.min(view.getWidth(), view.getHeight());
+        int maxSide = Math.max(view.getWidth(), view.getHeight());
+
+        this.scale = view.getScaleX();
+        this.rotate = view.getRotation();
+        this.translateX = view.getTranslationX() / startWidthSize;
+        this.translateY = view.getTranslationY() / (startWidthSize / minSide * maxSide);
+        this.videoWidth = videoWidth;
+        this.videoHeight = videoHeight;
+    }
+
     public float getScale() {
         return scale;
     }
@@ -38,6 +51,14 @@ public class FillModeCustomItem implements Parcelable {
 
     public float getTranslateY() {
         return translateY;
+    }
+
+    public float getTranslateX(float coef) {
+        return translateX * (coef * 2);
+    }
+
+    public float getTranslateY(float coef) {
+        return translateY * (coef * 2);
     }
 
     public float getVideoWidth() {

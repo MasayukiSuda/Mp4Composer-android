@@ -210,7 +210,12 @@ class Mp4ComposerEngine {
             return mp4vesMediaFormat;
         }
 
-        return createVideoFormat(VideoFormatMimeType.H263.getFormat(), bitrate, outputResolution);
+        final MediaFormat h263MediaFormat = createVideoFormat(VideoFormatMimeType.H263.getFormat(), bitrate, outputResolution);
+        if (mediaCodecList.findEncoderForFormat(h263MediaFormat) != null) {
+            return mp4vesMediaFormat;
+        }
+
+        return createVideoFormat(VideoFormatMimeType.AVC.getFormat(), bitrate, outputResolution);
     }
 
     @NonNull

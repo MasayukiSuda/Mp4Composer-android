@@ -153,10 +153,8 @@ public class FillModeCustomActivity extends AppCompatActivity {
         Size resolution = getVideoResolution(srcPath);
 
         FillModeCustomItem fillModeCustomItem = new FillModeCustomItem(
-                playerTextureView.getScaleX(),
-                playerTextureView.getRotation(),
-                playerTextureView.getTranslationX() / baseWidthSize * 2f,
-                playerTextureView.getTranslationY() / (baseWidthSize / 9f * 16) * 2f,
+                playerTextureView,
+                baseWidthSize,
                 resolution.getWidth(),
                 resolution.getHeight()
         );

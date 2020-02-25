@@ -52,4 +52,17 @@ public enum FillMode {
 
         return scale;
     }
+
+    public static float[] getScaleAspectCustom(int angle, int widthIn, int heightIn, int widthOut, int heightOut) {
+        final float[] scale = {1, 1};
+
+        if (angle == 90 || angle == 270){
+            scale[1] = scale[0] / ((float) widthIn / (float) heightIn);
+        } else {
+            float ratio = (float) widthOut / (float) heightOut;
+            scale[0] = ratio;
+            scale[1] = ratio / ((float) widthIn / (float) heightIn);
+        }
+        return scale;
+    }
 }
