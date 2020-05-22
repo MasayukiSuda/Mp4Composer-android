@@ -432,8 +432,8 @@ public class Mp4Composer {
             if (rawWidth == null || rawHeight == null) {
                 return null;
             }
-            final int width = Integer.valueOf(rawWidth);
-            final int height = Integer.valueOf(rawHeight);
+            final int width = Integer.parseInt(rawWidth);
+            final int height = Integer.parseInt(rawHeight);
 
             return new Size(width, height);
         } catch (IllegalArgumentException e) {
