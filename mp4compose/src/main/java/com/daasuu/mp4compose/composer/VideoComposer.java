@@ -5,6 +5,7 @@ import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.opengl.EGLContext;
+import android.util.Log;
 import android.util.Size;
 import androidx.annotation.NonNull;
 import com.daasuu.mp4compose.FillMode;
@@ -41,14 +42,13 @@ class VideoComposer {
     private boolean decoderStarted;
     private boolean encoderStarted;
     private long writtenPresentationTimeUs;
-    private final int timeScale;
+    private final float timeScale;
     private final long trimStartUs;
     private final long trimEndUs;
-
     private final Logger logger;
 
     VideoComposer(@NonNull MediaExtractor mediaExtractor, int trackIndex,
-                  @NonNull MediaFormat outputFormat, @NonNull MuxRender muxRender, int timeScale,
+                  @NonNull MediaFormat outputFormat, @NonNull MuxRender muxRender, float timeScale,
                   final long trimStartMs, final long trimEndMs, @NonNull Logger logger) {
         this.mediaExtractor = mediaExtractor;
         this.trackIndex = trackIndex;
@@ -59,7 +59,6 @@ class VideoComposer {
         this.trimEndUs = trimEndMs == -1 ? trimEndMs : TimeUnit.MILLISECONDS.toMicros(trimEndMs);
         this.logger = logger;
     }
-
 
     void setUp(GlFilter filter,
                Rotation rotation,
@@ -110,7 +109,6 @@ class VideoComposer {
         decoderStarted = true;
     }
 
-
     boolean stepPipeline() {
         boolean busy = false;
 
@@ -132,16 +130,13 @@ class VideoComposer {
         return busy;
     }
 
-
     long getWrittenPresentationTimeUs() {
-        return writtenPresentationTimeUs * timeScale;
+        return (long)(writtenPresentationTimeUs * timeScale);
     }
-
 
     boolean isFinished() {
         return isEncoderEOS;
     }
-
 
     void release() {
         if (decoderSurface != null) {
@@ -179,7 +174,7 @@ class VideoComposer {
         }
         int sampleSizeCompat = mediaExtractor.readSampleData(decoder.getInputBuffer(result), 0);
         boolean isKeyFrame = (mediaExtractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0;
-        decoder.queueInputBuffer(result, 0, sampleSizeCompat, mediaExtractor.getSampleTime() / timeScale, isKeyFrame ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0);
+        decoder.queueInputBuffer(result, 0, sampleSizeCompat, (long)(mediaExtractor.getSampleTime() / timeScale), isKeyFrame ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0);
         mediaExtractor.advance();
         return DRAIN_STATE_CONSUMED;
     }
