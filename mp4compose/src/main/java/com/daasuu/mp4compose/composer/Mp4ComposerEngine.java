@@ -60,7 +60,8 @@ class Mp4ComposerEngine {
             final Size inputResolution,
             final FillMode fillMode,
             final FillModeCustomItem fillModeCustomItem,
-            final int timeScale,
+            final float timeScale,
+            final boolean isPitchChanged,
             final boolean flipVertical,
             final boolean flipHorizontal,
             final long trimStartMs,
@@ -68,7 +69,6 @@ class Mp4ComposerEngine {
             final VideoFormatMimeType videoFormatMimeType,
             final EGLContext shareContext
     ) throws IOException {
-
 
         try {
             mediaExtractor = new MediaExtractor();
@@ -120,10 +120,10 @@ class Mp4ComposerEngine {
                 final MediaFormat inputMediaFormat = mediaExtractor.getTrackFormat(audioTrackIndex);
                 final MediaFormat outputMediaFormat = createAudioOutputFormat(inputMediaFormat);
 
-                if (timeScale < 2 && outputMediaFormat.equals(inputMediaFormat)) {
+                if( timeScale >= 0.99 && timeScale <= 1.01  && outputMediaFormat.equals(inputMediaFormat)) {
                     audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender, trimStartMs, trimEndMs, logger);
                 } else {
-                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, outputMediaFormat, muxRender, timeScale, trimStartMs, trimEndMs);
+                    audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, outputMediaFormat, muxRender, timeScale, isPitchChanged , trimStartMs, trimEndMs);
                 }
 
                 audioComposer.setup();
@@ -135,7 +135,6 @@ class Mp4ComposerEngine {
                 // no audio video
                 runPipelinesNoAudio();
             }
-
 
             mediaMuxer.stop();
         } finally {

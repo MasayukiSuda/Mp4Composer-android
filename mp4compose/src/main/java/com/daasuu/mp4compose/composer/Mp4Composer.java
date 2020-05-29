@@ -46,7 +46,8 @@ public class Mp4Composer {
     private Listener listener;
     private FillMode fillMode = FillMode.PRESERVE_ASPECT_FIT;
     private FillModeCustomItem fillModeCustomItem;
-    private int timeScale = 1;
+    private float timeScale = 1f; // should be in range 0.125 (-8X) to 8.0 (8X)
+    private boolean isPitchChanged = false;
     private boolean flipVertical = false;
     private boolean flipHorizontal = false;
     private long trimStartMs = 0;
@@ -169,8 +170,13 @@ public class Mp4Composer {
         return this;
     }
 
-    public Mp4Composer timeScale(final int timeScale) {
+    public Mp4Composer timeScale(final float timeScale) {
         this.timeScale = timeScale;
+        return this;
+    }
+
+    public Mp4Composer changePitch(final boolean isPitchChanged){
+        this.isPitchChanged = isPitchChanged;
         return this;
     }
 
@@ -276,8 +282,10 @@ public class Mp4Composer {
                     }
                 }
 
-                if (timeScale < 2) {
-                    timeScale = 1;
+                if (timeScale < 0.125f) {
+                    timeScale = 0.125f;
+                }else if(timeScale > 8f){
+                    timeScale = 8f;
                 }
 
                 if (shareContext == null) {
@@ -307,6 +315,7 @@ public class Mp4Composer {
                             fillMode,
                             fillModeCustomItem,
                             timeScale,
+                            isPitchChanged,
                             flipVertical,
                             flipHorizontal,
                             trimStartMs,

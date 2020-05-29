@@ -6,8 +6,6 @@ import android.media.MediaFormat;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
-import java.util.ArrayDeque;
-import java.util.Queue;
 
 // Refer: https://github.com/ypresto/android-transcoder/blob/master/lib/src/main/java/net/ypresto/androidtranscoder/engine/AudioChannel.java
 
@@ -15,65 +13,25 @@ import java.util.Queue;
  * Created by sudamasayuki2 on 2018/02/22.
  */
 
-class AudioChannel {
-
-    private static class AudioBuffer {
-        int bufferIndex;
-        long presentationTimeUs;
-        ShortBuffer data;
-    }
-
-    static final int BUFFER_INDEX_END_OF_STREAM = -1;
-
-    private static final int BYTES_PER_SHORT = 2;
-    private static final long MICROSECS_PER_SEC = 1000000;
-
-    private final Queue<AudioBuffer> emptyBuffers = new ArrayDeque<>();
-    private final Queue<AudioBuffer> filledBuffers = new ArrayDeque<>();
-
-    private final MediaCodec decoder;
-    private final MediaCodec encoder;
-    private final MediaFormat encodeFormat;
-
-    private int inputSampleRate;
-    private int inputChannelCount;
-    private int outputChannelCount;
-
-    private final AudioBuffer overflowBuffer = new AudioBuffer();
-
-    private MediaFormat actualDecodedFormat;
-
+class AudioChannel extends BaseAudioChannel {
 
     AudioChannel(final MediaCodec decoder,
                  final MediaCodec encoder, final MediaFormat encodeFormat) {
-        this.decoder = decoder;
-        this.encoder = encoder;
-        this.encodeFormat = encodeFormat;
+        super(decoder,encoder,encodeFormat);
     }
 
-    void setActualDecodedFormat(final MediaFormat decodedFormat) {
-        actualDecodedFormat = decodedFormat;
-
-        inputSampleRate = actualDecodedFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-        if (inputSampleRate != encodeFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)) {
-            throw new UnsupportedOperationException("Audio sample rate conversion not supported yet.");
-        }
-
-        inputChannelCount = actualDecodedFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-        outputChannelCount = encodeFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+    @Override
+    public void setActualDecodedFormat(MediaFormat decodedFormat) {
+        super.setActualDecodedFormat(decodedFormat);
 
         if (inputChannelCount != 1 && inputChannelCount != 2) {
             throw new UnsupportedOperationException("Input channel count (" + inputChannelCount + ") not supported.");
         }
-
-        if (outputChannelCount != 1 && outputChannelCount != 2) {
-            throw new UnsupportedOperationException("Output channel count (" + outputChannelCount + ") not supported.");
-        }
-
-        overflowBuffer.presentationTimeUs = 0;
     }
 
-    void drainDecoderBufferAndQueue(final int bufferIndex, final long presentationTimeUs) {
+    @Override
+    public void drainDecoderBufferAndQueue(int bufferIndex, long presentationTimeUs) {
+
         if (actualDecodedFormat == null) {
             throw new RuntimeException("Buffer received before format!");
         }
@@ -102,7 +60,8 @@ class AudioChannel {
         filledBuffers.add(buffer);
     }
 
-    boolean feedEncoder(long timeoutUs) {
+    @Override
+    public boolean feedEncoder(long timeoutUs) {
         final boolean hasOverflow = overflowBuffer.data != null && overflowBuffer.data.hasRemaining();
         if (filledBuffers.isEmpty() && !hasOverflow) {
             // No audio data - Bail out
@@ -143,9 +102,8 @@ class AudioChannel {
         return true;
     }
 
-    private static long sampleCountToDurationUs(final int sampleCount,
-                                                final int sampleRate,
-                                                final int channelCount) {
+    @Override
+    protected long sampleCountToDurationUs(long sampleCount, int sampleRate, int channelCount) {
         return (sampleCount / (sampleRate * MICROSECS_PER_SEC)) / channelCount;
     }
 
@@ -173,6 +131,7 @@ class AudioChannel {
 
         return beginPresentationTimeUs;
     }
+
 
     private long remixAndMaybeFillOverflow(final AudioBuffer input,
                                            final ShortBuffer outBuff) {
@@ -206,8 +165,8 @@ class AudioChannel {
             // No overflow
             outBuff.put(inBuff);
         }
-
         return input.presentationTimeUs;
     }
+
 }
 
