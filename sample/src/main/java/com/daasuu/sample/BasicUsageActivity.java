@@ -152,9 +152,9 @@ public class BasicUsageActivity extends AppCompatActivity {
                 .fillMode(FillMode.PRESERVE_ASPECT_FIT)
                 .filter(glFilter)
                 .mute(muteCheckBox.isChecked())
-                .timeScale(0.65f)
-                .changePitch(false)
-                //.trim(2000, 50000)
+                //.timeScale(2f)
+                //.changePitch(false)
+                //.trim(2000, 5000)
                 .flipHorizontal(flipHorizontalCheckBox.isChecked())
                 .flipVertical(flipVerticalCheckBox.isChecked())
                 .listener(new Mp4Composer.Listener() {
