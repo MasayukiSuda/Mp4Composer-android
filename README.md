@@ -82,6 +82,8 @@ dependencies {
 | flipVertical | Flip Vertical on exported video. Default `flipVertical = false`. |
 | flipHorizontal | Flip Horizontal on exported video. Default `flipHorizontal = false`. |
 | videoFormatMimeType | The mime type of the video format on exported video. default AUTO. Suppurt HEVC, AVC, MPEG4, H263. Check <a href="https://github.com/MasayukiSuda/Mp4Composer-android/blob/master/mp4compose/src/main/java/com/daasuu/mp4compose/VideoFormatMimeType.java" >this</a>. |
+| timeScale | Set TimeScale. default value is 1f. should be in range 0.125 (-8X) to 8.0 (8X) |
+
 
 
 
