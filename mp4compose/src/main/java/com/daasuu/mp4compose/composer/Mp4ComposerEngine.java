@@ -267,7 +267,11 @@ class Mp4ComposerEngine {
                     || audioComposer.stepPipeline();
             loopCount++;
             if (durationUs > 0 && loopCount % PROGRESS_INTERVAL_STEPS == 0) {
-                double videoProgress = videoComposer.isFinished() ? 1.0 : Math.min(1.0, (double) videoComposer.getWrittenPresentationTimeUs() / durationUs);
+                long writtenPresentationVideoTimeUs = videoComposer.getWrittenPresentationTimeUs();
+                if (progressCallback != null) {
+                    progressCallback.onCurrentWrittenVideoTime(writtenPresentationVideoTimeUs);
+                }
+                double videoProgress = videoComposer.isFinished() ? 1.0 : Math.min(1.0, (double) writtenPresentationVideoTimeUs / durationUs);
                 double audioProgress = audioComposer.isFinished() ? 1.0 : Math.min(1.0, (double) audioComposer.getWrittenPresentationTimeUs() / durationUs);
                 double progress = (videoProgress + audioProgress) / 2.0;
                 if (progressCallback != null) {
@@ -295,7 +299,11 @@ class Mp4ComposerEngine {
             boolean stepped = videoComposer.stepPipeline();
             loopCount++;
             if (durationUs > 0 && loopCount % PROGRESS_INTERVAL_STEPS == 0) {
-                double videoProgress = videoComposer.isFinished() ? 1.0 : Math.min(1.0, (double) videoComposer.getWrittenPresentationTimeUs() / durationUs);
+                long writtenPresentationVideoTimeUs = videoComposer.getWrittenPresentationTimeUs();
+                if (progressCallback != null) {
+                    progressCallback.onCurrentWrittenVideoTime(writtenPresentationVideoTimeUs);
+                }
+                double videoProgress = videoComposer.isFinished() ? 1.0 : Math.min(1.0, (double) writtenPresentationVideoTimeUs  / durationUs);
                 if (progressCallback != null) {
                     progressCallback.onProgress(videoProgress);
                 }
@@ -320,5 +328,12 @@ class Mp4ComposerEngine {
          * @param progress Progress in [0.0, 1.0] range, or negative value if progress is unknown.
          */
         void onProgress(double progress);
+
+        /**
+         * Called to propagate current time at video transcoding process
+         *
+         * @param timeUs Current time, in Us
+         */
+        void onCurrentWrittenVideoTime(long timeUs);
     }
 }
