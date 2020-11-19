@@ -69,7 +69,7 @@ class VideoComposer {
                final boolean flipVertical,
                final boolean flipHorizontal,
                final EGLContext shareContext) {
-        mediaExtractor.selectTrack(trackIndex);
+//        mediaExtractor.selectTrack(trackIndex);
         try {
             encoder = MediaCodec.createEncoderByType(outputFormat.getString(MediaFormat.KEY_MIME));
         } catch (IOException e) {
@@ -162,14 +162,16 @@ class VideoComposer {
     private int drainExtractor() {
         if (isExtractorEOS) return DRAIN_STATE_NONE;
         int trackIndex = mediaExtractor.getSampleTrackIndex();
+        logger.debug(TAG, "drainExtractor trackIndex:" +trackIndex);
         if (trackIndex >= 0 && trackIndex != this.trackIndex) {
             return DRAIN_STATE_NONE;
         }
         int result = decoder.dequeueInputBuffer(0);
         if (result < 0) return DRAIN_STATE_NONE;
-        if (trackIndex < 0) {
+        if (trackIndex < 0 || (writtenPresentationTimeUs >= trimEndUs && trimEndUs != -1)) {
             isExtractorEOS = true;
             decoder.queueInputBuffer(result, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
+            mediaExtractor.unselectTrack(this.trackIndex);
             return DRAIN_STATE_NONE;
         }
         int sampleSizeCompat = mediaExtractor.readSampleData(decoder.getInputBuffer(result), 0);
