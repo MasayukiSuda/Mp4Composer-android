@@ -39,6 +39,8 @@ class Mp4ComposerEngine {
     private MediaMetadataRetriever mediaMetadataRetriever;
     private volatile boolean canceled;
     private final Logger logger;
+    private long trimStartMs;
+    private long trimEndMs;
 
     Mp4ComposerEngine(@NonNull final Logger logger) {
         this.logger = logger;
@@ -80,11 +82,19 @@ class Mp4ComposerEngine {
             }
             mediaMetadataRetriever = new MediaMetadataRetriever();
             mediaMetadataRetriever.setDataSource(srcDataSource.getFileDescriptor());
-            try {
-                durationUs = Long.parseLong(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) * 1000;
-            } catch (NumberFormatException e) {
-                durationUs = -1;
+
+            this.trimStartMs = trimStartMs;
+            this.trimEndMs = trimEndMs;
+            if (trimEndMs != -1) {
+                durationUs = (trimEndMs - trimStartMs) * 1000;
+            } else {
+                try {
+                    durationUs = Long.parseLong(mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) * 1000;
+                } catch (NumberFormatException e) {
+                    durationUs = -1;
+                }
             }
+
             logger.debug(TAG, "Duration (us): " + durationUs);
 
             MuxRender muxRender = new MuxRender(mediaMuxer, logger);
@@ -127,11 +137,11 @@ class Mp4ComposerEngine {
                 }
 
                 audioComposer.setup();
-
                 mediaExtractor.selectTrack(audioTrackIndex);
-
+                mediaExtractor.seekTo(trimStartMs * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
                 runPipelines();
             } else {
+                mediaExtractor.seekTo(trimStartMs * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
                 // no audio video
                 runPipelinesNoAudio();
             }
@@ -267,8 +277,8 @@ class Mp4ComposerEngine {
                     || audioComposer.stepPipeline();
             loopCount++;
             if (durationUs > 0 && loopCount % PROGRESS_INTERVAL_STEPS == 0) {
-                double videoProgress = videoComposer.isFinished() ? 1.0 : Math.min(1.0, (double) videoComposer.getWrittenPresentationTimeUs() / durationUs);
-                double audioProgress = audioComposer.isFinished() ? 1.0 : Math.min(1.0, (double) audioComposer.getWrittenPresentationTimeUs() / durationUs);
+                double videoProgress = videoComposer.isFinished() ? 1.0 : Math.min(1.0, (double) getWrittenPresentationTimeUs(videoComposer.getWrittenPresentationTimeUs()) / durationUs);
+                double audioProgress = audioComposer.isFinished() ? 1.0 : Math.min(1.0, (double) getWrittenPresentationTimeUs(audioComposer.getWrittenPresentationTimeUs()) / durationUs);
                 double progress = (videoProgress + audioProgress) / 2.0;
                 if (progressCallback != null) {
                     progressCallback.onProgress(progress);
@@ -284,6 +294,10 @@ class Mp4ComposerEngine {
         }
     }
 
+    private long getWrittenPresentationTimeUs(long time) {
+        return Math.max(0, time - trimStartMs * 1000);
+    }
+
     private void runPipelinesNoAudio() {
         long loopCount = 0;
         if (durationUs <= 0) {
@@ -295,7 +309,7 @@ class Mp4ComposerEngine {
             boolean stepped = videoComposer.stepPipeline();
             loopCount++;
             if (durationUs > 0 && loopCount % PROGRESS_INTERVAL_STEPS == 0) {
-                double videoProgress = videoComposer.isFinished() ? 1.0 : Math.min(1.0, (double) videoComposer.getWrittenPresentationTimeUs() / durationUs);
+                double videoProgress = videoComposer.isFinished() ? 1.0 : Math.min(1.0, (double) getWrittenPresentationTimeUs(videoComposer.getWrittenPresentationTimeUs()) / durationUs);
                 if (progressCallback != null) {
                     progressCallback.onProgress(videoProgress);
                 }
