@@ -57,11 +57,13 @@ class AudioComposer implements IAudioComposer {
     public boolean stepPipeline() {
         if (isEOS) return false;
         int trackIndex = mediaExtractor.getSampleTrackIndex();
-        if (trackIndex < 0) {
+        logger.debug(TAG, "stepPipeline trackIndex:" + trackIndex);
+        if (trackIndex < 0 || (writtenPresentationTimeUs >= trimEndUs && trimEndUs != -1)) {
             buffer.clear();
             bufferInfo.set(0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
             muxRender.writeSampleData(sampleType, buffer, bufferInfo);
             isEOS = true;
+            mediaExtractor.unselectTrack(this.trackIndex);
             return true;
         }
         if (trackIndex != this.trackIndex) return false;

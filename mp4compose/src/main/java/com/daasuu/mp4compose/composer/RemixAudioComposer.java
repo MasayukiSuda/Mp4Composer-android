@@ -124,9 +124,10 @@ class RemixAudioComposer implements IAudioComposer {
 
         final int result = decoder.dequeueInputBuffer(timeoutUs);
         if (result < 0) return DRAIN_STATE_NONE;
-        if (trackIndex < 0) {
+        if (trackIndex < 0 || (writtenPresentationTimeUs >= trimEndUs && trimEndUs != -1)) {
             isExtractorEOS = true;
             decoder.queueInputBuffer(result, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
+            extractor.unselectTrack(this.trackIndex);
             return DRAIN_STATE_NONE;
         }
 
