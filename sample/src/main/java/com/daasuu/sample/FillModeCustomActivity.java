@@ -210,6 +210,11 @@ public class FillModeCustomActivity extends AppCompatActivity {
                     }
 
                     @Override
+                    public void onCurrentWrittenVideoTime(long timeUs) {
+
+                    }
+
+                    @Override
                     public void onFailed(Exception exception) {
                         Log.d(TAG, "onFailed()");
                     }
