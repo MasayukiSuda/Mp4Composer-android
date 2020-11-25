@@ -243,6 +243,13 @@ public class Mp4Composer {
                             listener.onProgress(progress);
                         }
                     }
+
+                    @Override
+                    public void onCurrentWrittenVideoTime(long timeUs) {
+                        if (listener != null) {
+                            listener.onCurrentWrittenVideoTime(timeUs);
+                        }
+                    }
                 });
 
                 final Integer videoRotate = getVideoRotation(srcDataSource);
@@ -374,6 +381,13 @@ public class Mp4Composer {
          * @param progress Progress in [0.0, 1.0] range, or negative value if progress is unknown.
          */
         void onProgress(double progress);
+
+        /**
+         * Called to propagate current time at video transcoding process
+         *
+         * @param timeUs Current time, in Us
+         */
+        void onCurrentWrittenVideoTime(long timeUs);
 
         /**
          * Called when transcode completed.
